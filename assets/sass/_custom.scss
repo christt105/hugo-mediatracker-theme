@@ -79,6 +79,26 @@
     gap: 20px;
 }
 
+/* Card titles use the normal text color, not the theme link blue */
+.media-info h3 {
+    margin: 8px 0 2px;
+    font-size: 1rem;
+    line-height: 1.3;
+}
+
+/* Beat the theme's .dark .page-content a blue (higher specificity) */
+.media-info h3 a,
+.dark .media-info h3 a,
+html:not(.light) .media-info h3 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.media-info h3 a:hover,
+.dark .media-info h3 a:hover {
+    color: var(--primary, #4f8cff);
+}
+
 .year-title {
     font-size: 2.5rem;
     font-weight: 800;
@@ -295,23 +315,61 @@
     color: var(--secondary);
 }
 
-.media-overview {
-    margin-bottom: 20px;
-    font-size: 1.1rem;
-    line-height: 1.6;
-    opacity: 0.9;
+/* Collapsed synopsis: one ellipsized line when closed, full text when open */
+.media-synopsis {
+    margin: 16px 0 26px;
     max-width: 800px;
-
-    p {
-        margin: 0;
-    }
+    font-size: 0.95rem;
 }
 
-.media-overview-title {
-    margin: 0 0 8px;
-    font-size: 1.15rem;
+.media-synopsis summary {
+    cursor: pointer;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    list-style: none;
+    opacity: 0.7;
+}
+
+.media-synopsis summary::-webkit-details-marker {
+    display: none;
+}
+
+.synopsis-caret {
+    font-size: 0.75em;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+}
+
+.media-synopsis[open] .synopsis-caret {
+    transform: rotate(90deg);
+}
+
+.synopsis-label {
     font-weight: 700;
-    opacity: 0.75;
+    flex-shrink: 0;
+}
+
+.synopsis-preview {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.media-synopsis[open] .synopsis-preview {
+    display: none;
+}
+
+.synopsis-full {
+    display: none;
+    margin: 8px 0 0;
+    line-height: 1.6;
+    opacity: 0.9;
+}
+
+.media-synopsis[open] .synopsis-full {
+    display: block;
 }
 
 .media-taxonomies {
@@ -888,35 +946,51 @@
     white-space: nowrap;
 }
 
-/* On the mobile hamburger menu, show the submenu inline instead of floating */
+/* On the mobile hamburger menu, drop the Biblioteca label and show its sections
+   directly. visibility: inherit keeps them hidden while the menu is closed
+   (the base theme hides the closed menu with visibility: hidden). */
 @media (max-width: 768px) {
+    .trigger-container .has-submenu > .menu-link {
+        display: none;
+    }
     .trigger-container .submenu {
         position: static;
         opacity: 1;
-        visibility: visible;
+        visibility: inherit;
         transform: none;
         box-shadow: none;
         border: none;
         background: transparent;
-        padding: 4px 0 4px 18px;
+        padding: 0;
         min-width: 0;
     }
 }
 
 /* ============================ Series/season relations ============================ */
 .media-relations {
-    margin: 36px 0;
+    margin-top: 48px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(128, 128, 128, 0.2);
 }
 
 .media-relations-title {
-    margin: 0 0 16px;
+    margin: 0 0 18px;
     font-size: 1.3rem;
     font-weight: 700;
-    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
-    padding-bottom: 8px;
 }
 
 .media-grid-relations {
+    display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 16px;
+}
+
+/* A single related item (a season's show) sits centered */
+.media-grid-single {
+    display: flex;
+    justify-content: center;
+}
+
+.media-grid-single .media-card {
+    width: 160px;
 }

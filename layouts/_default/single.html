@@ -194,21 +194,25 @@
             </header>
             {{ end }}
 
-            {{/* Synopsis from frontmatter (separate from the personal review below) */}}
+            {{/* Synopsis: collapsed by default so the personal review stands out */}}
             {{ with .Params.overview }}
-            <div class="media-overview">
-                <h3 class="media-overview-title">{{ T "synopsis" | default "Sinopsis" }}</h3>
-                <p>{{ . }}</p>
-            </div>
+            <details class="media-synopsis">
+                <summary>
+                    <i class="fas fa-chevron-right synopsis-caret" aria-hidden="true"></i>
+                    <span class="synopsis-label">{{ T "synopsis" | default "Sinopsis" }}</span>
+                    <span class="synopsis-preview">{{ . }}</span>
+                </summary>
+                <p class="synopsis-full">{{ . }}</p>
+            </details>
             {{ end }}
 
-            {{/* Series/season relations as cover cards */}}
-            {{ partial "media-relations.html" . }}
-
-            {{/* Content */}}
+            {{/* Content (personal review) */}}
             <div class="page-content">
                 {{ .Content }}
             </div>
+
+            {{/* Series/season relations as cover cards */}}
+            {{ partial "media-relations.html" . }}
 
             {{ partial "toc.html" .}}
         </article>
