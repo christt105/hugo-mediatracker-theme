@@ -48,9 +48,11 @@
             <button type="button" class="filter-chip active" data-value="">{{ T "filter_all" }}</button>
             {{ range $t := $types }}
             {{ $def := index $.Site.Data.media_types $t }}
+            {{ if not $def.parent }}
             <button type="button" class="filter-chip" data-value="{{ $t }}">
                 <i class="{{ $def.icon }}" aria-hidden="true"></i> {{ T $t | humanize }}
             </button>
+            {{ end }}
             {{ end }}
         </div>
 

@@ -29,6 +29,36 @@
 {{/* Colour palette for pie charts */}}
 {{ $pieColors := slice "#4f8cff" "#f59e0b" "#22c55e" "#ef4444" "#a855f7" "#ec4899" "#14b8a6" "#f97316" "#0ea5e9" "#d946ef" "#84cc16" "#fb7185" }}
 
+{{/* Rewatch helpers — rewatches is a list of dates, each counts as one extra completion */}}
+{{ $totalRewatches := 0 }}
+{{ range $finished }}
+  {{ if reflect.IsSlice .Params.rewatches }}{{ $totalRewatches = add $totalRewatches (len .Params.rewatches) }}{{ end }}
+{{ end }}
+
+{{/* Year → completions (original finish + each rewatch), sorted desc */}}
+{{ $yearCounts := dict }}
+{{ range $item := $finished }}
+  {{ $iy := $item.Date.Format "2006" }}
+  {{ if ne $iy "0001" }}
+    {{ $c := index $yearCounts $iy | default 0 }}
+    {{ $yearCounts = merge $yearCounts (dict $iy (add $c 1)) }}
+  {{ end }}
+  {{ if reflect.IsSlice $item.Params.rewatches }}
+  {{ range $item.Params.rewatches }}
+    {{ if . }}
+      {{ $ry := (time .).Format "2006" }}
+      {{ $c := index $yearCounts $ry | default 0 }}
+      {{ $yearCounts = merge $yearCounts (dict $ry (add $c 1)) }}
+    {{ end }}
+  {{ end }}
+  {{ end }}
+{{ end }}
+{{ $yearCountList := slice }}
+{{ range $yr2, $cnt := $yearCounts }}
+  {{ $yearCountList = $yearCountList | append (dict "year" $yr2 "count" $cnt) }}
+{{ end }}
+{{ $yearCountList = sort $yearCountList "year" "desc" }}
+
 {{/* ------------------------------------------------------------------ */}}
 {{/*  Helper macro: render a set of stats for a given page slice.         */}}
 {{/*  We inline it per block (all-time + each year) below.               */}}
@@ -59,15 +89,23 @@
 
         {{/* Summary cards — all time */}}
         {{ $sum := 0 }}{{ $n := 0 }}
-        {{ range $finished }}{{ with .Params.rating }}{{ $sum = add $sum (int .) }}{{ $n = add $n 1 }}{{ end }}{{ end }}
+        {{ range $item := $finished }}
+          {{ with $item.Params.rating }}
+            {{ $times := 1 }}
+            {{ if reflect.IsSlice $item.Params.rewatches }}{{ $times = add $times (len $item.Params.rewatches) }}{{ end }}
+            {{ $sum = add $sum (mul (int .) $times) }}
+            {{ $n = add $n $times }}
+          {{ end }}
+        {{ end }}
         {{ $avg := 0.0 }}{{ if gt $n 0 }}{{ $avg = div (float $sum) $n }}{{ end }}
+        {{ $totalCompletions := add (len $finished) $totalRewatches }}
         <section class="stats-cards">
             <div class="stat-card">
                 <span class="stat-number">{{ len $media }}</span>
                 <span class="stat-label">{{ T "stats_total" }}</span>
             </div>
             <div class="stat-card">
-                <span class="stat-number">{{ len $finished }}</span>
+                <span class="stat-number">{{ $totalCompletions }}</span>
                 <span class="stat-label">{{ T "stats_finished" }}</span>
             </div>
             {{ range $t := $types }}
@@ -89,10 +127,17 @@
             {{ end }}
         </section>
 
-        {{/* Rating distribution — all time */}}
+        {{/* Rating distribution — all time, completion-weighted */}}
         {{ $maxRatingCount := 1 }}
-        {{ range $ratingKeys }}
-            {{ $c := len (where $finished "Params.rating" "eq" .key) }}
+        {{ range $rk := $ratingKeys }}
+            {{ $c := 0 }}
+            {{ range $item := $finished }}
+              {{ if eq $item.Params.rating $rk.key }}
+                {{ $times := 1 }}
+                {{ if reflect.IsSlice $item.Params.rewatches }}{{ $times = add $times (len $item.Params.rewatches) }}{{ end }}
+                {{ $c = add $c $times }}
+              {{ end }}
+            {{ end }}
             {{ if gt $c $maxRatingCount }}{{ $maxRatingCount = $c }}{{ end }}
         {{ end }}
         {{ if gt (len $ratingKeys) 0 }}
@@ -101,7 +146,14 @@
             <div class="stat-bars">
                 {{ range $ratingKeys }}
                 {{ $theme := index $.Site.Data.ratings .key }}
-                {{ $c := len (where $finished "Params.rating" "eq" .key) }}
+                {{ $c := 0 }}
+                {{ range $item := $finished }}
+                  {{ if eq $item.Params.rating .key }}
+                    {{ $times := 1 }}
+                    {{ if reflect.IsSlice $item.Params.rewatches }}{{ $times = add $times (len $item.Params.rewatches) }}{{ end }}
+                    {{ $c = add $c $times }}
+                  {{ end }}
+                {{ end }}
                 <div class="stat-bar-row">
                     <span class="stat-bar-name">
                         {{ with $theme }}<i class="{{ .icon }}" style="color:{{ .color }}"></i> {{ .label }}{{ else }}{{ .key }}{{ end }}
@@ -116,22 +168,19 @@
         </section>
         {{ end }}
 
-        {{/* Finished per year */}}
+        {{/* Finished per year (includes rewatches) */}}
         {{ $maxYear := 1 }}
-        {{ range $byYear }}
-            {{ if and (ne .Key "0001") (gt (len .Pages) $maxYear) }}{{ $maxYear = len .Pages }}{{ end }}
-        {{ end }}
+        {{ range $yearCountList }}{{ if gt .count $maxYear }}{{ $maxYear = .count }}{{ end }}{{ end }}
         <section class="stats-section">
             <h2 class="section-title">{{ T "stats_per_year" }}</h2>
             <div class="stat-bars">
-                {{ range $byYear }}
-                {{ $label := .Key }}{{ if eq .Key "0001" }}{{ $label = "?" }}{{ end }}
+                {{ range $yearCountList }}
                 <div class="stat-bar-row">
-                    <span class="stat-bar-name">{{ $label }}</span>
+                    <span class="stat-bar-name">{{ .year }}</span>
                     <span class="stat-bar-track">
-                        <span class="stat-bar-fill" style="width:{{ math.Round (mul (div (float (len .Pages)) $maxYear) 100) }}%;"></span>
+                        <span class="stat-bar-fill" style="width:{{ math.Round (mul (div (float .count) $maxYear) 100) }}%;"></span>
                     </span>
-                    <span class="stat-bar-value">{{ len .Pages }}</span>
+                    <span class="stat-bar-value">{{ .count }}</span>
                 </div>
                 {{ end }}
             </div>
@@ -207,9 +256,18 @@
         {{ $ySum := 0 }}{{ $yN := 0 }}
         {{ range $yrFinished }}{{ with .Params.rating }}{{ $ySum = add $ySum (int .) }}{{ $yN = add $yN 1 }}{{ end }}{{ end }}
         {{ $yAvg := 0.0 }}{{ if gt $yN 0 }}{{ $yAvg = div (float $ySum) $yN }}{{ end }}
+        {{/* Count rewatches that occurred in this year but whose original finish is in another year */}}
+        {{ $yrCompletions := len $yrFinished }}
+        {{ range $item := $finished }}
+          {{ if reflect.IsSlice $item.Params.rewatches }}
+          {{ range $item.Params.rewatches }}
+            {{ if . }}{{ if eq ((time .).Format "2006") $yr }}{{ $yrCompletions = add $yrCompletions 1 }}{{ end }}{{ end }}
+          {{ end }}
+          {{ end }}
+        {{ end }}
         <section class="stats-cards">
             <div class="stat-card">
-                <span class="stat-number">{{ len $yrFinished }}</span>
+                <span class="stat-number">{{ $yrCompletions }}</span>
                 <span class="stat-label">{{ T "stats_finished" }}</span>
             </div>
             {{ range $t := $types }}
