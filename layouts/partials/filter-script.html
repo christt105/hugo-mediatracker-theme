@@ -10,7 +10,8 @@
     var completedHeading = document.getElementById('completed-section');
 
     // Each group holds a set of selected values (empty = no constraint).
-    var state = { q: '', type: [], status: [], rating: [] };
+    var state = { q: '', type: [], status: [], rating: [], tag: [], platform: [] };
+    var groups = ['type', 'status', 'rating', 'tag', 'platform'];
 
     function norm(s) {
         return (s || '').toString().toLowerCase()
@@ -18,17 +19,31 @@
     }
 
     function anyActive() {
-        return state.q !== '' || state.type.length || state.status.length || state.rating.length;
+        if (state.q !== '') return true;
+        for (var i = 0; i < groups.length; i++) { if (state[groups[i]].length) return true; }
+        return false;
     }
 
     function inGroup(group, value) {
         return state[group].length === 0 || state[group].indexOf(value) !== -1;
     }
 
+    // For multi-valued card attributes (pipe-delimited): match if any selected value is present
+    function inMulti(group, pipe) {
+        if (state[group].length === 0) return true;
+        var vals = (pipe || '').split('|');
+        for (var i = 0; i < state[group].length; i++) {
+            if (vals.indexOf(state[group][i]) !== -1) return true;
+        }
+        return false;
+    }
+
     function cardMatches(card) {
         if (!inGroup('type', card.getAttribute('data-type'))) return false;
         if (!inGroup('status', card.getAttribute('data-status'))) return false;
         if (!inGroup('rating', card.getAttribute('data-rating'))) return false;
+        if (!inMulti('tag', card.getAttribute('data-tags'))) return false;
+        if (!inMulti('platform', card.getAttribute('data-platforms'))) return false;
         if (state.q) {
             var hay = norm(card.getAttribute('data-title')) + ' ' + norm(card.getAttribute('data-genres'));
             if (hay.indexOf(state.q) === -1) return false;
@@ -88,7 +103,7 @@
         if (!window.history || !history.replaceState) return;
         var params = new URLSearchParams();
         if (state.q) params.set('q', state.q);
-        ['type', 'status', 'rating'].forEach(function (k) {
+        groups.forEach(function (k) {
             if (state[k].length) params.set(k, state[k].join(','));
         });
         var qs = params.toString();
@@ -103,7 +118,7 @@
 
     function initFromUrl() {
         var params = new URLSearchParams(location.search);
-        ['type', 'status', 'rating'].forEach(function (k) {
+        groups.forEach(function (k) {
             if (!params.has(k)) return;
             var valid = {};
             bar.querySelectorAll('.filter-chips[data-filter-group="' + k + '"] .filter-chip').forEach(function (c) {
@@ -113,6 +128,11 @@
             var groupEl = bar.querySelector('.filter-chips[data-filter-group="' + k + '"]');
             if (groupEl) refreshChips(groupEl, k);
         });
+        // Open the advanced section if a tag/platform filter is active
+        if ((state.tag.length || state.platform.length)) {
+            var adv = bar.querySelector('.filter-advanced');
+            if (adv) adv.open = true;
+        }
         if (params.has('q') && search) {
             state.q = norm(params.get('q').trim());
             search.value = params.get('q');

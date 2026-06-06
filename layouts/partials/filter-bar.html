@@ -6,6 +6,36 @@
 {{ $types := partial "media-type-keys.html" . }}
 {{ $statuses := slice "finished" "in_progress" "paused" "dropped" "not_started" }}
 
+{{/* Rating keys, sorted high to low, from the site's rating scale */}}
+{{ $ratingKeys := slice }}
+{{ range $k, $v := .Site.Data.ratings }}
+  {{ if ne $k "default" }}{{ $ratingKeys = $ratingKeys | append (dict "key" $k "n" (int $k)) }}{{ end }}
+{{ end }}
+{{ $ratingKeys = sort $ratingKeys "n" "desc" }}
+
+{{/* Distinct tags and platforms across the library (label keeps original case) */}}
+{{ $media := where .Site.RegularPages "Params.type" "in" $types }}
+{{ $tagSeen := dict }}
+{{ $tagList := slice }}
+{{ $platSeen := dict }}
+{{ $platList := slice }}
+{{ range $media }}
+  {{ $pageTags := .Params.tags }}
+  {{ if and $pageTags (not (reflect.IsSlice $pageTags)) }}{{ $pageTags = slice $pageTags }}{{ end }}
+  {{ range $pageTags }}
+    {{ $lk := lower . }}
+    {{ if and . (not (index $tagSeen $lk)) }}{{ $tagSeen = merge $tagSeen (dict $lk true) }}{{ $tagList = $tagList | append (dict "label" . "value" $lk) }}{{ end }}
+  {{ end }}
+  {{ $pagePlats := .Params.platforms }}
+  {{ if and $pagePlats (not (reflect.IsSlice $pagePlats)) }}{{ $pagePlats = slice $pagePlats }}{{ end }}
+  {{ range $pagePlats }}
+    {{ $lk := lower . }}
+    {{ if and . (not (index $platSeen $lk)) }}{{ $platSeen = merge $platSeen (dict $lk true) }}{{ $platList = $platList | append (dict "label" . "value" $lk) }}{{ end }}
+  {{ end }}
+{{ end }}
+{{ $tagList = sort $tagList "label" }}
+{{ $platList = sort $platList "label" }}
+
 <div class="filter-bar" id="filter-bar">
     <div class="filter-search">
         <i class="fas fa-search" aria-hidden="true"></i>
@@ -33,15 +63,37 @@
 
         <div class="filter-chips filter-ratings" data-filter-group="rating">
             <button type="button" class="filter-chip active" data-value="">{{ T "filter_all" }}</button>
-            {{ range $r := slice "7" "6" "5" "4" "3" "2" "1" }}
-            {{ $theme := index $.Site.Data.ratings $r }}
-            <button type="button" class="filter-chip" data-value="{{ $r }}" title="{{ $theme.label }}"
-                style="--chip-accent: {{ $theme.color }}">
-                <i class="{{ $theme.icon }}" aria-hidden="true"></i>
+            {{ range $ratingKeys }}
+            {{ $theme := index $.Site.Data.ratings .key }}
+            <button type="button" class="filter-chip" data-value="{{ .key }}" title="{{ with $theme }}{{ .label }}{{ end }}"
+                style="--chip-accent: {{ with $theme }}{{ .color }}{{ end }}">
+                {{ with $theme }}<i class="{{ .icon }}" aria-hidden="true"></i>{{ else }}{{ .key }}{{ end }}
             </button>
             {{ end }}
         </div>
     </div>
+
+    {{ if or (gt (len $tagList) 0) (gt (len $platList) 0) }}
+    <details class="filter-advanced">
+        <summary>{{ T "filter_more" }}</summary>
+        {{ if gt (len $platList) 0 }}
+        <div class="filter-chips" data-filter-group="platform">
+            <button type="button" class="filter-chip active" data-value="">{{ T "filter_platforms" }}</button>
+            {{ range $platList }}
+            <button type="button" class="filter-chip" data-value="{{ .value }}">{{ .label }}</button>
+            {{ end }}
+        </div>
+        {{ end }}
+        {{ if gt (len $tagList) 0 }}
+        <div class="filter-chips" data-filter-group="tag">
+            <button type="button" class="filter-chip active" data-value="">{{ T "filter_tags" }}</button>
+            {{ range $tagList }}
+            <button type="button" class="filter-chip" data-value="{{ .value }}">#{{ .label }}</button>
+            {{ end }}
+        </div>
+        {{ end }}
+    </details>
+    {{ end }}
 
     <p class="filter-noresults" id="filter-noresults" hidden>{{ T "no_results" }}</p>
 </div>

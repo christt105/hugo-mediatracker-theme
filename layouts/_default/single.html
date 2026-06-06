@@ -33,8 +33,8 @@
                         {{ end }}
                         {{ if .Params.rating }}
                         {{ $ratingKey := string .Params.rating }}
-                        {{ $theme := index .Site.Data.ratings $ratingKey | default .Site.Data.ratings.default }}
-                        <div class="media-rating-badge" style="background: {{ $theme.color }}; color: {{ $theme.text_color | default " white" }}">{{ $theme.label }}</div>
+                        {{ $theme := index .Site.Data.ratings $ratingKey | default (index .Site.Data.ratings "default") }}
+                        {{ with $theme }}<div class="media-rating-badge" style="background: {{ .color }}; color: {{ .text_color | default " white" }}">{{ .label }}</div>{{ end }}
                         {{ end }}
                     </div>
                     {{ end }}
@@ -123,10 +123,10 @@
                             <div class="taxonomy-group tags-list">
                                 {{ $tags := .Params.tags }}
                                 {{ if not (reflect.IsSlice $tags) }}{{ $tags = slice $tags }}{{ end }}
+                                {{ $base := $.Site.Home.RelPermalink }}
                                 {{ range $tags }}
-                                {{ $tagName := . | urlize }}
-                                {{ $tags := printf "tags/%s" $tagName | relLangURL }}
-                                <a href="{{ $tags }}" class="tag-link">#{{ . }}</a>
+                                {{/* Link to the home page filtered by this tag */}}
+                                <a href="{{ $base }}?tag={{ lower . | urlquery }}" class="tag-link">#{{ . }}</a>
                                 {{ end }}
                             </div>
                             {{ end }}
@@ -164,8 +164,8 @@
                     {{ end }}
                     {{ if .Params.rating }}
                     {{ $ratingKey := string .Params.rating }}
-                    {{ $theme := index .Site.Data.ratings $ratingKey | default .Site.Data.ratings.default }}
-                    <div class="media-rating-badge" style="background: {{ $theme.color }}; color: {{ $theme.text_color | default " white" }}">{{ $theme.label }}</div>
+                    {{ $theme := index .Site.Data.ratings $ratingKey | default (index .Site.Data.ratings "default") }}
+                    {{ with $theme }}<div class="media-rating-badge" style="background: {{ .color }}; color: {{ .text_color | default " white" }}">{{ .label }}</div>{{ end }}
                     {{ end }}
                 </div>
                 {{ end }}

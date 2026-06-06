@@ -13,10 +13,15 @@
 {{ end }}
 {{ $genres := $page.Params.genres }}
 {{ if not (reflect.IsSlice $genres) }}{{ $genres = slice }}{{ end }}
+{{ $tags := $page.Params.tags }}
+{{ if not (reflect.IsSlice $tags) }}{{ $tags = slice }}{{ end }}
+{{ $platforms := $page.Params.platforms }}
+{{ if not (reflect.IsSlice $platforms) }}{{ $platforms = slice }}{{ end }}
 
 <div class="media-card" data-title="{{ lower $page.Title }}" data-year="{{ $cardYear }}"
     data-type="{{ $page.Params.type }}" data-status="{{ $statusKey }}"
-    data-rating="{{ $page.Params.rating }}" data-genres="{{ delimit $genres "|" | lower }}">
+    data-rating="{{ $page.Params.rating }}" data-genres="{{ delimit $genres "|" | lower }}"
+    data-tags="{{ delimit $tags "|" | lower }}" data-platforms="{{ delimit $platforms "|" | lower }}">
 
     <div class="media-poster">
         <a href="{{ $page.Permalink }}">
@@ -56,14 +61,16 @@
 
         {{ $ratingKey := string $page.Params.rating }}
 
-        {{ $theme := index $page.Site.Data.ratings $ratingKey | default $page.Site.Data.ratings.default }}
+        {{ $theme := index $page.Site.Data.ratings $ratingKey | default (index $page.Site.Data.ratings "default") }}
 
-        <div class="margin-rating" style="background: {{ $theme.color }};"></div>
+        {{ with $theme }}
+        <div class="margin-rating" style="background: {{ .color }};"></div>
 
-        <div class="badge-rating" style="background: {{ $theme.color }}; color: {{ $theme.text_color | default " white"
+        <div class="badge-rating" style="background: {{ .color }}; color: {{ .text_color | default " white"
             }}">
-            <i class="{{ $theme.icon }}"></i>
+            <i class="{{ .icon }}"></i>
         </div>
+        {{ end }}
 
         {{ end }}
     </div>

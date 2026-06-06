@@ -994,3 +994,39 @@ html:not(.light) .media-info h3 a {
 .media-grid-single .media-card {
     width: 160px;
 }
+
+/* Advanced filters (tags + platforms), collapsed by default */
+.filter-advanced {
+    margin-top: 4px;
+}
+
+.filter-advanced > summary {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    opacity: 0.7;
+    list-style: none;
+    padding: 4px 0;
+}
+
+.filter-advanced > summary::-webkit-details-marker {
+    display: none;
+}
+
+.filter-advanced > summary::before {
+    content: "\f0b0"; /* fa filter */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 0.8em;
+}
+
+.filter-advanced[open] > summary {
+    margin-bottom: 12px;
+}
+
+.filter-advanced .filter-chips {
+    margin-bottom: 10px;
+}

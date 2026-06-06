@@ -56,5 +56,43 @@
   translation: Buscar por título o género...
 - id: filter_all
   translation: Todos
+- id: filter_tags
+  translation: Etiquetas
+- id: filter_platforms
+  translation: Plataformas
+- id: filter_more
+  translation: Más
 - id: no_results
   translation: No hay resultados.
+
+# Stats page
+- id: stats_total
+  translation: Total
+- id: stats_finished
+  translation: Acabados
+- id: stats_avg_rating
+  translation: Nota media
+- id: stats_ratings_dist
+  translation: Distribución de notas
+- id: stats_per_year
+  translation: Acabados por año
+- id: stats_top_genres
+  translation: Géneros más frecuentes
+- id: stats_platforms
+  translation: Plataformas de juego
+- id: type_plural_movie
+  translation: Películas
+- id: type_plural_tv
+  translation: Series
+- id: type_plural_season
+  translation: Temporadas
+- id: type_plural_videogame
+  translation: Juegos
+- id: type_plural_book
+  translation: Libros
+
+# RSS feeds
+- id: feed_finished_title
+  translation: Acabados
+- id: feed_finished_description
+  translation: Elementos acabados en

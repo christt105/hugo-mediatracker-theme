@@ -1,16 +1,14 @@
 {{ define "main" }}
 {{/*
   Stats / dashboard page. Everything is computed server-side from the existing
-  frontmatter so there is no JS chart dependency.
+  frontmatter so there is no JS chart dependency. Types, statuses and the rating
+  scale are read from the data files, so it adapts to any configuration.
 */}}
 
-{{ $media := where .Site.RegularPages "Params.type" "in" (slice "movie" "tv" "season" "videogame") }}
-{{ $finished := where $media "Params.status" "eq" "Acabado" }}
-
-{{ $movies := where $media "Params.type" "eq" "movie" }}
-{{ $series := where $media "Params.type" "eq" "tv" }}
-{{ $seasons := where $media "Params.type" "eq" "season" }}
-{{ $games := where $media "Params.type" "eq" "videogame" }}
+{{ $types := partial "media-type-keys.html" . }}
+{{ $media := where .Site.RegularPages "Params.type" "in" $types }}
+{{ $finishedAliases := (index .Site.Data.statuses "finished").aliases }}
+{{ $finished := where $media "Params.status" "in" $finishedAliases }}
 
 {{/* Average rating across finished items that have a rating */}}
 {{ $sum := 0 }}
@@ -35,63 +33,60 @@
         <section class="stats-cards">
             <div class="stat-card">
                 <span class="stat-number">{{ len $media }}</span>
-                <span class="stat-label">Total</span>
+                <span class="stat-label">{{ T "stats_total" }}</span>
             </div>
             <div class="stat-card">
                 <span class="stat-number">{{ len $finished }}</span>
-                <span class="stat-label">Acabados</span>
+                <span class="stat-label">{{ T "stats_finished" }}</span>
             </div>
+            {{ range $t := $types }}
+            {{ $def := index $.Site.Data.media_types $t }}
+            {{ $count := len (where $media "Params.type" "eq" $t) }}
             <div class="stat-card">
-                <span class="stat-number"><i class="fas fa-film"></i> {{ len $movies }}</span>
-                <span class="stat-label">Películas</span>
+                <span class="stat-number"><i class="{{ $def.icon }}"></i> {{ $count }}</span>
+                <span class="stat-label">{{ T (printf "type_plural_%s" $t) }}</span>
             </div>
-            <div class="stat-card">
-                <span class="stat-number"><i class="fas fa-tv"></i> {{ len $series }}</span>
-                <span class="stat-label">Series</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-number"><i class="fas fa-list-ol"></i> {{ len $seasons }}</span>
-                <span class="stat-label">Temporadas</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-number"><i class="fas fa-gamepad"></i> {{ len $games }}</span>
-                <span class="stat-label">Juegos</span>
-            </div>
+            {{ end }}
             {{ if gt $n 0 }}
             <div class="stat-card">
                 <span class="stat-number">{{ lang.FormatNumber 1 $avg }}</span>
-                <span class="stat-label">Nota media</span>
+                <span class="stat-label">{{ T "stats_avg_rating" }}</span>
             </div>
             {{ end }}
         </section>
 
-        {{/* ---------- Ratings distribution ---------- */}}
-        {{ $ratingOrder := slice "7" "6" "5" "4" "3" "2" "1" }}
+        {{/* ---------- Ratings distribution (data-driven over the rating scale) ---------- */}}
+        {{ $ratingKeys := slice }}
+        {{ range $k, $v := .Site.Data.ratings }}
+            {{ if ne $k "default" }}{{ $ratingKeys = $ratingKeys | append (dict "key" $k "n" (int $k)) }}{{ end }}
+        {{ end }}
+        {{ $ratingKeys = sort $ratingKeys "n" "desc" }}
         {{ $maxRating := 1 }}
-        {{ range $ratingOrder }}
-            {{ $c := len (where $finished "Params.rating" "eq" .) }}
+        {{ range $ratingKeys }}
+            {{ $c := len (where $finished "Params.rating" "eq" .key) }}
             {{ if gt $c $maxRating }}{{ $maxRating = $c }}{{ end }}
         {{ end }}
 
+        {{ if gt (len $ratingKeys) 0 }}
         <section class="stats-section">
-            <h2 class="section-title">Distribución de notas</h2>
+            <h2 class="section-title">{{ T "stats_ratings_dist" }}</h2>
             <div class="stat-bars">
-                {{ range $ratingOrder }}
-                {{ $theme := index $.Site.Data.ratings . }}
-                {{ $c := len (where $finished "Params.rating" "eq" .) }}
+                {{ range $ratingKeys }}
+                {{ $theme := index $.Site.Data.ratings .key }}
+                {{ $c := len (where $finished "Params.rating" "eq" .key) }}
                 <div class="stat-bar-row">
                     <span class="stat-bar-name">
-                        <i class="{{ $theme.icon }}" style="color: {{ $theme.color }}"></i>
-                        {{ $theme.label }}
+                        {{ with $theme }}<i class="{{ .icon }}" style="color: {{ .color }}"></i> {{ .label }}{{ else }}{{ .key }}{{ end }}
                     </span>
                     <span class="stat-bar-track">
-                        <span class="stat-bar-fill" style="width: {{ if gt $maxRating 0 }}{{ math.Round (mul (div (float $c) $maxRating) 100) }}{{ else }}0{{ end }}%; background: {{ $theme.color }};"></span>
+                        <span class="stat-bar-fill" style="width: {{ math.Round (mul (div (float $c) $maxRating) 100) }}%; background: {{ with $theme }}{{ .color }}{{ end }};"></span>
                     </span>
                     <span class="stat-bar-value">{{ $c }}</span>
                 </div>
                 {{ end }}
             </div>
         </section>
+        {{ end }}
 
         {{/* ---------- Finished per year ---------- */}}
         {{ $byYear := $finished.GroupByDate "2006" }}
@@ -101,7 +96,7 @@
         {{ end }}
 
         <section class="stats-section">
-            <h2 class="section-title">Acabados por año</h2>
+            <h2 class="section-title">{{ T "stats_per_year" }}</h2>
             <div class="stat-bars">
                 {{ range $byYear }}
                 {{ $label := .Key }}
@@ -136,7 +131,7 @@
         {{ if gt (len $genreList) 0 }}
         {{ $maxGenre := (index $genreList 0).count }}
         <section class="stats-section">
-            <h2 class="section-title">Géneros más frecuentes</h2>
+            <h2 class="section-title">{{ T "stats_top_genres" }}</h2>
             <div class="stat-bars">
                 {{ range first 12 $genreList }}
                 <div class="stat-bar-row">
@@ -152,6 +147,7 @@
         {{ end }}
 
         {{/* ---------- Top platforms (games) ---------- */}}
+        {{ $games := where $media "Params.type" "eq" "videogame" }}
         {{ $platforms := dict }}
         {{ range $games }}
             {{ range .Params.platforms }}
@@ -170,7 +166,7 @@
         {{ if gt (len $platformList) 0 }}
         {{ $maxPlatform := (index $platformList 0).count }}
         <section class="stats-section">
-            <h2 class="section-title">Plataformas de juego</h2>
+            <h2 class="section-title">{{ T "stats_platforms" }}</h2>
             <div class="stat-bars">
                 {{ range $platformList }}
                 <div class="stat-bar-row">
