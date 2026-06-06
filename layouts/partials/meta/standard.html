@@ -20,6 +20,8 @@
 {{- $description := "" -}}
 {{- if .Params.description -}}
   {{- $description = trim .Params.description "\n" -}}
+{{- else if and .IsPage (ne (trim .Plain " \n\r\t") "") -}}
+  {{- $description = .Plain | truncate 200 -}}
 {{- else if .Params.overview -}}
   {{- $description = trim .Params.overview "\n" | truncate 200 -}}
 {{- else if .Site.Params.description -}}

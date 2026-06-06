@@ -80,6 +80,14 @@
   translation: Géneros más frecuentes
 - id: stats_platforms
   translation: Plataformas de juego
+- id: stats_avg_rating_by_year
+  translation: Nota media por año
+- id: stats_platform_pie
+  translation: Distribución de plataformas
+- id: stats_anime
+  translation: Contenido anime
+- id: stats_cinema
+  translation: Cine vs. Streaming
 - id: type_plural_movie
   translation: Películas
 - id: type_plural_tv

@@ -3,39 +3,43 @@
 
 <div class="collage-wrapper">
 
-    <aside class="collage-controls">
-        <h2>Configuración Collage</h2>
+    <button class="collage-controls-toggle" id="controls-toggle" aria-expanded="true" aria-controls="collage-controls-panel">
+        <i class="fas fa-sliders-h"></i> <span id="toggle-label">Hide Controls</span>
+    </button>
+
+    <aside class="collage-controls" id="collage-controls-panel">
+        <h2>Collage Settings</h2>
 
         <div class="control-group">
-            <label>📅 Desde:</label>
+            <label>📅 From:</label>
             <input type="date" id="start-date">
         </div>
 
         <div class="control-group">
-            <label>📅 Hasta:</label>
+            <label>📅 To:</label>
             <input type="date" id="end-date">
         </div>
 
         <div class="control-group">
-            <label>Tipo:</label>
+            <label>Type:</label>
             <div class="checkbox-wrapper">
-                <label><input type="checkbox" value="movie" checked> Películas</label>
+                <label><input type="checkbox" value="movie" checked> Movies</label>
                 <label><input type="checkbox" value="tv" checked> Series</label>
-                <label><input type="checkbox" value="videogame" checked> Juegos</label>
+                <label><input type="checkbox" value="videogame" checked> Games</label>
             </div>
         </div>
 
         <div class="control-group">
-            <label>Columnas: <span id="col-val">5</span></label>
+            <label>Columns: <span id="col-val">5</span></label>
             <input type="range" id="columns-range" min="2" max="20" value="5">
         </div>
 
         <div class="control-stats">
-            Items encontrados: <strong id="count-display">0</strong>
+            Items found: <strong id="count-display">0</strong>
         </div>
 
         <button id="download-btn" class="btn-download">
-            <i class="fas fa-download"></i> Descargar PNG
+            <i class="fas fa-download"></i> Download PNG
         </button>
     </aside>
 
@@ -50,32 +54,43 @@
 <style>
     .collage-wrapper {
         display: flex;
-        gap: 30px;
-        padding: 20px;
+        flex-direction: row;
+        gap: 20px;
+        padding: 16px;
         max-width: 100%;
-        margin: 80px auto 0;
-        height: calc(100vh - 100px); 
+        margin: 70px auto 0;
+        height: calc(100vh - 90px);
         box-sizing: border-box;
+        position: relative;
+    }
+
+    .collage-controls-toggle {
+        display: none;
     }
 
     .collage-controls {
-        flex: 0 0 300px;
-        background: rgb(59, 59, 59);
+        flex: 0 0 280px;
+        background: rgb(50, 50, 50);
         padding: 20px;
         border-radius: 12px;
-        height: fit-content;
         overflow-y: auto;
         max-height: 100%;
     }
 
+    .collage-controls h2 {
+        margin: 0 0 16px;
+        font-size: 1.1rem;
+    }
+
     .control-group {
-        margin-bottom: 20px;
+        margin-bottom: 18px;
     }
 
     .control-group label {
         display: block;
         font-weight: bold;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
+        font-size: 0.9rem;
     }
 
     .checkbox-wrapper label {
@@ -83,43 +98,53 @@
         font-weight: normal;
         margin-bottom: 5px;
         cursor: pointer;
+        font-size: 0.9rem;
     }
 
     input[type="date"],
     input[type="range"] {
         width: 100%;
-        padding: 8px;
+        padding: 6px 8px;
         border-radius: 6px;
-        border: 1px solid #ccc;
+        border: 1px solid rgba(128,128,128,0.4);
         box-sizing: border-box;
+        background: rgba(0,0,0,0.3);
+        color: inherit;
+    }
+
+    .control-stats {
+        font-size: 0.85rem;
+        margin-bottom: 16px;
+        opacity: 0.75;
     }
 
     .btn-download {
         width: 100%;
-        padding: 15px;
+        padding: 12px;
         background: #3b82f6;
         color: white;
         border: none;
         border-radius: 8px;
-        font-size: 1.1rem;
+        font-size: 1rem;
         cursor: pointer;
-        transition: background 0.3s;
+        transition: opacity 0.2s;
     }
 
     .btn-download:hover {
-        opacity: 0.9;
+        opacity: 0.85;
     }
 
     .collage-preview-area {
         flex: 1;
-        background: #333;
-        padding: 20px;
+        background: #2a2a2a;
+        padding: 16px;
         border-radius: 12px;
         overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
+        min-height: 200px;
     }
 
     .canvas-scaler {
@@ -148,6 +173,51 @@
         object-fit: cover;
         display: block;
     }
+
+    /* Mobile layout */
+    @media (max-width: 768px) {
+        .collage-wrapper {
+            flex-direction: column;
+            height: auto;
+            margin-top: 60px;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        .collage-controls-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: rgb(50, 50, 50);
+            border: none;
+            border-radius: 8px;
+            color: inherit;
+            font-size: 0.95rem;
+            cursor: pointer;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .collage-controls {
+            flex: none;
+            max-height: none;
+            transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+        }
+
+        .collage-controls.is-collapsed {
+            max-height: 0 !important;
+            padding-top: 0;
+            padding-bottom: 0;
+            opacity: 0;
+        }
+
+        .collage-preview-area {
+            height: 60vw;
+            min-height: 240px;
+        }
+    }
 </style>
 
 <script>
@@ -156,6 +226,9 @@
     const canvas = document.getElementById('collage-canvas');
     const scaler = document.querySelector('.canvas-scaler');
     const previewArea = document.querySelector('.collage-preview-area');
+    const controlsPanel = document.getElementById('collage-controls-panel');
+    const toggleBtn = document.getElementById('controls-toggle');
+    const toggleLabel = document.getElementById('toggle-label');
 
     const startDateInput = document.getElementById('start-date');
     const endDateInput = document.getElementById('end-date');
@@ -163,11 +236,22 @@
     const colValDisplay = document.getElementById('col-val');
     const countDisplay = document.getElementById('count-display');
 
+    // Set default columns based on screen width
+    if (window.innerWidth <= 768) {
+        columnsInput.value = 3;
+    }
+
+    // Controls toggle for mobile
+    toggleBtn.addEventListener('click', function() {
+        const collapsed = controlsPanel.classList.toggle('is-collapsed');
+        toggleBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        toggleLabel.textContent = collapsed ? 'Show Controls' : 'Hide Controls';
+    });
+
     fetch('{{ "index.json" | relURL }}')
         .then(response => response.json())
         .then(data => {
             allMedia = data;
-            console.log("Data loaded:", allMedia.length);
 
             const today = new Date();
             const startOfYear = new Date(today.getFullYear(), 0, 2);
@@ -175,7 +259,7 @@
             endDateInput.valueAsDate = today;
 
             renderCollage();
-            
+
             window.addEventListener('resize', fitPreviewToScreen);
         });
 
@@ -226,17 +310,17 @@
     function fitPreviewToScreen() {
         if (!canvas.firstChild) return;
 
-        const containerWidth = previewArea.clientWidth - 40; 
-        const containerHeight = previewArea.clientHeight - 40;
-        
+        const containerWidth = previewArea.clientWidth - 32;
+        const containerHeight = previewArea.clientHeight - 32;
+
         const contentWidth = canvas.scrollWidth;
         const contentHeight = canvas.scrollHeight;
 
         const scaleX = containerWidth / contentWidth;
         const scaleY = containerHeight / contentHeight;
-        
+
         let scale = Math.min(scaleX, scaleY);
-        
+
         if (scale > 1) scale = 1;
 
         scaler.style.transform = `scale(${scale})`;
@@ -254,29 +338,26 @@
     document.getElementById('download-btn').addEventListener('click', () => {
         const btn = document.getElementById('download-btn');
         const originalText = btn.innerHTML;
-        const itemCount = parseInt(countDisplay.innerText);
 
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
         btn.disabled = true;
-
-        const SAFE_SCALE = 1; 
 
         html2canvas(canvas, {
             useCORS: true,
             allowTaint: true,
-            scale: SAFE_SCALE, 
+            scale: 1,
             backgroundColor: null,
             logging: false,
             onclone: (clonedDoc) => {
                 const clonedCanvas = clonedDoc.getElementById('collage-canvas');
                 const clonedScaler = clonedDoc.querySelector('.canvas-scaler');
-                
+
                 if(clonedScaler) {
                     clonedScaler.style.transform = 'none';
                     clonedScaler.style.margin = '0';
                     clonedScaler.style.padding = '0';
                 }
-                
+
                 clonedCanvas.style.overflow = 'visible';
                 clonedCanvas.style.maxWidth = 'none';
                 clonedCanvas.style.height = 'auto';
@@ -289,7 +370,7 @@
                     btn.disabled = false;
                     return;
                 }
-                
+
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.download = `MediaTracker_${new Date().toISOString().slice(0, 10)}.png`;
@@ -297,7 +378,7 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                
+
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
 
                 btn.innerHTML = originalText;
@@ -307,8 +388,8 @@
         }).catch(err => {
             console.error("Canvas Error:", err);
             btn.innerHTML = 'Error :(';
-            setTimeout(() => { 
-                btn.innerHTML = originalText; 
+            setTimeout(() => {
+                btn.innerHTML = originalText;
                 btn.disabled = false;
             }, 2000);
         });
