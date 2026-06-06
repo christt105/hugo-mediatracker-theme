@@ -29,13 +29,17 @@
 {{/* Colour palette for pie charts */}}
 {{ $pieColors := slice "#4f8cff" "#f59e0b" "#22c55e" "#ef4444" "#a855f7" "#ec4899" "#14b8a6" "#f97316" "#0ea5e9" "#d946ef" "#84cc16" "#fb7185" }}
 
-{{/* Rewatch helpers — rewatches is a list of dates, each counts as one extra completion */}}
+{{/* Rewatch helpers — rewatches is a list of dates; skip YAML map entries (e.g. "date: description") */}}
 {{ $totalRewatches := 0 }}
-{{ range $finished }}
-  {{ if reflect.IsSlice .Params.rewatches }}{{ $totalRewatches = add $totalRewatches (len .Params.rewatches) }}{{ end }}
+{{ range $item := $finished }}
+  {{ if reflect.IsSlice $item.Params.rewatches }}
+  {{ range $item.Params.rewatches }}
+    {{ if and . (not (reflect.IsMap .)) }}{{ $totalRewatches = add $totalRewatches 1 }}{{ end }}
+  {{ end }}
+  {{ end }}
 {{ end }}
 
-{{/* Year → completions (original finish + each rewatch), sorted desc */}}
+{{/* Year → completions (original finish + each rewatch date), sorted desc */}}
 {{ $yearCounts := dict }}
 {{ range $item := $finished }}
   {{ $iy := $item.Date.Format "2006" }}
@@ -45,17 +49,19 @@
   {{ end }}
   {{ if reflect.IsSlice $item.Params.rewatches }}
   {{ range $item.Params.rewatches }}
-    {{ if . }}
+    {{ if and . (not (reflect.IsMap .)) }}
       {{ $ry := (time .).Format "2006" }}
-      {{ $c := index $yearCounts $ry | default 0 }}
-      {{ $yearCounts = merge $yearCounts (dict $ry (add $c 1)) }}
+      {{ if ne $ry "0001" }}
+        {{ $c := index $yearCounts $ry | default 0 }}
+        {{ $yearCounts = merge $yearCounts (dict $ry (add $c 1)) }}
+      {{ end }}
     {{ end }}
   {{ end }}
   {{ end }}
 {{ end }}
 {{ $yearCountList := slice }}
 {{ range $yr2, $cnt := $yearCounts }}
-  {{ $yearCountList = $yearCountList | append (dict "year" $yr2 "count" $cnt) }}
+  {{ if ne $yr2 "0001" }}{{ $yearCountList = $yearCountList | append (dict "year" $yr2 "count" $cnt) }}{{ end }}
 {{ end }}
 {{ $yearCountList = sort $yearCountList "year" "desc" }}
 
@@ -92,7 +98,9 @@
         {{ range $item := $finished }}
           {{ with $item.Params.rating }}
             {{ $times := 1 }}
-            {{ if reflect.IsSlice $item.Params.rewatches }}{{ $times = add $times (len $item.Params.rewatches) }}{{ end }}
+            {{ if reflect.IsSlice $item.Params.rewatches }}
+            {{ range $item.Params.rewatches }}{{ if and . (not (reflect.IsMap .)) }}{{ $times = add $times 1 }}{{ end }}{{ end }}
+            {{ end }}
             {{ $sum = add $sum (mul (int .) $times) }}
             {{ $n = add $n $times }}
           {{ end }}
@@ -134,7 +142,9 @@
             {{ range $item := $finished }}
               {{ if eq $item.Params.rating $rk.key }}
                 {{ $times := 1 }}
-                {{ if reflect.IsSlice $item.Params.rewatches }}{{ $times = add $times (len $item.Params.rewatches) }}{{ end }}
+                {{ if reflect.IsSlice $item.Params.rewatches }}
+                {{ range $item.Params.rewatches }}{{ if and . (not (reflect.IsMap .)) }}{{ $times = add $times 1 }}{{ end }}{{ end }}
+                {{ end }}
                 {{ $c = add $c $times }}
               {{ end }}
             {{ end }}
@@ -150,7 +160,9 @@
                 {{ range $item := $finished }}
                   {{ if eq $item.Params.rating $rk2.key }}
                     {{ $times := 1 }}
-                    {{ if reflect.IsSlice $item.Params.rewatches }}{{ $times = add $times (len $item.Params.rewatches) }}{{ end }}
+                    {{ if reflect.IsSlice $item.Params.rewatches }}
+                    {{ range $item.Params.rewatches }}{{ if and . (not (reflect.IsMap .)) }}{{ $times = add $times 1 }}{{ end }}{{ end }}
+                    {{ end }}
                     {{ $c = add $c $times }}
                   {{ end }}
                 {{ end }}
@@ -249,6 +261,16 @@
         {{ $yr := . }}
         {{ $yrFinished := slice }}
         {{ range $byYear }}{{ if eq .Key $yr }}{{ $yrFinished = .Pages }}{{ end }}{{ end }}
+        {{/* Add one copy per rewatch occurrence in this year (skip YAML map entries) */}}
+        {{ range $item := $finished }}
+          {{ if reflect.IsSlice $item.Params.rewatches }}
+          {{ range $item.Params.rewatches }}
+            {{ if and . (not (reflect.IsMap .)) }}
+              {{ if eq ((time .).Format "2006") $yr }}{{ $yrFinished = $yrFinished | append $item }}{{ end }}
+            {{ end }}
+          {{ end }}
+          {{ end }}
+        {{ end }}
 
         <div data-stats-year="{{ $yr }}" hidden>
 
@@ -256,18 +278,9 @@
         {{ $ySum := 0 }}{{ $yN := 0 }}
         {{ range $yrFinished }}{{ with .Params.rating }}{{ $ySum = add $ySum (int .) }}{{ $yN = add $yN 1 }}{{ end }}{{ end }}
         {{ $yAvg := 0.0 }}{{ if gt $yN 0 }}{{ $yAvg = div (float $ySum) $yN }}{{ end }}
-        {{/* Count rewatches that occurred in this year but whose original finish is in another year */}}
-        {{ $yrCompletions := len $yrFinished }}
-        {{ range $item := $finished }}
-          {{ if reflect.IsSlice $item.Params.rewatches }}
-          {{ range $item.Params.rewatches }}
-            {{ if . }}{{ if eq ((time .).Format "2006") $yr }}{{ $yrCompletions = add $yrCompletions 1 }}{{ end }}{{ end }}
-          {{ end }}
-          {{ end }}
-        {{ end }}
         <section class="stats-cards">
             <div class="stat-card">
-                <span class="stat-number">{{ $yrCompletions }}</span>
+                <span class="stat-number">{{ len $yrFinished }}</span>
                 <span class="stat-label">{{ T "stats_finished" }}</span>
             </div>
             {{ range $t := $types }}
