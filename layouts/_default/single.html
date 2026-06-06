@@ -97,6 +97,7 @@
 
                             {{ if .Params.platforms }}
                             <div class="taxonomy-group platforms-list">
+                                {{ $base := $.Site.Home.RelPermalink }}
                                 {{ range .Params.platforms }}
 
                                 {{ $p := lower . }} {{ $icon := "fas fa-gamepad" }} {{ if or (eq $p "steam deck") (eq $p
@@ -112,9 +113,9 @@
                                 {{ $icon = "fa-brands fa-xbox" }}
                                 {{ end }}
 
-                                <span class="platform-badge" title="Jugado en {{ . }}">
+                                <a href="{{ $base }}?platform={{ lower . | urlquery }}" class="platform-badge">
                                     <i class="{{ $icon }}"></i> {{ . }}
-                                </span>
+                                </a>
                                 {{ end }}
                             </div>
                             {{ end }}

@@ -1,0 +1,106 @@
+- id: movie
+  translation: Movie
+- id: tv
+  translation: Series
+- id: season
+  translation: Season
+- id: videogame
+  translation: Video Game
+- id: book
+  translation: Book
+- id: Movies
+  translation: Movies
+- id: Tvs
+  translation: Series
+- id: Games
+  translation: Games
+- id: Books
+  translation: Books
+- id: synopsis
+  translation: Synopsis
+
+# Status labels (keys from data/statuses.yml)
+- id: status_finished
+  translation: Finished
+- id: status_in_progress
+  translation: In Progress
+- id: status_paused
+  translation: Paused
+- id: status_dropped
+  translation: Dropped
+- id: status_not_started
+  translation: Not Started
+
+# Extra type fields (keys from data/media_types.yml fields)
+- id: field_developer
+  translation: Developer
+- id: field_author
+  translation: Author
+
+# Listing sections
+- id: completed
+  translation: Completed
+- id: no_completed
+  translation: No completed items yet.
+- id: unknown_year
+  translation: Year unknown
+- id: see_paused_dropped
+  translation: See Paused & Dropped
+- id: relation_series
+  translation: Series
+- id: relation_seasons
+  translation: Seasons
+
+# Search and filters
+- id: search_placeholder
+  translation: Search by title or genre...
+- id: filter_all
+  translation: All
+- id: filter_tags
+  translation: Tags
+- id: filter_platforms
+  translation: Platforms
+- id: filter_more
+  translation: More
+- id: no_results
+  translation: No results found.
+
+# Stats page
+- id: stats_total
+  translation: Total
+- id: stats_finished
+  translation: Finished
+- id: stats_avg_rating
+  translation: Avg. Rating
+- id: stats_ratings_dist
+  translation: Rating Distribution
+- id: stats_per_year
+  translation: Finished per Year
+- id: stats_avg_rating_by_year
+  translation: Avg. Rating by Year
+- id: stats_top_genres
+  translation: Top Genres
+- id: stats_platforms
+  translation: Gaming Platforms
+- id: stats_platform_pie
+  translation: Platform Distribution
+- id: stats_anime
+  translation: Anime Content
+- id: stats_cinema
+  translation: Cinema vs. Streaming
+- id: type_plural_movie
+  translation: Movies
+- id: type_plural_tv
+  translation: Series
+- id: type_plural_season
+  translation: Seasons
+- id: type_plural_videogame
+  translation: Games
+- id: type_plural_book
+  translation: Books
+
+# RSS feeds
+- id: feed_finished_title
+  translation: Finished
+- id: feed_finished_description
+  translation: Items finished on
