@@ -12,8 +12,8 @@
   <title>{{ $p.Title }}</title>
   <link>{{ $p.Permalink }}</link>
   <pubDate>{{ $p.Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</pubDate>
-  {{- with $p.Site.Author.email }}
-  <author>{{ . }}{{ with $p.Site.Author.name }} ({{ . }}){{ end }}</author>
+  {{- with $p.Site.Params.author.email }}
+  <author>{{ . }}{{ with $p.Site.Params.author.name }} ({{ . }}){{ end }}</author>
   {{- end }}
   <guid>{{ $p.Permalink }}</guid>
   {{- if $full }}

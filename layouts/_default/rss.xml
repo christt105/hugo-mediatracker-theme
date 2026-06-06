@@ -12,7 +12,7 @@
 {{- end -}}
 {{- $rssFeedDescription := .Site.Params.rssFeedDescription | default "summary" -}}
 {{- printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | safeHTML }}
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>{{ if eq  .Title  .Site.Title }}{{ .Site.Title }}{{ else }}{{ with .Title }}{{.}} on {{ end }}{{ .Site.Title }}{{ end }}</title>
     <link>{{ .Permalink }}</link>
@@ -26,9 +26,20 @@
     {{- with .OutputFormats.Get "RSS" -}}
     {{ printf "<atom:link href=%q rel=\"self\" type=%q />" .Permalink .MediaType | safeHTML }}
     {{- end -}}
-    {{- $full := eq $rssFeedDescription "full" -}}
     {{ range $pages }}
-    {{ partial "rss-item.html" (dict "page" . "full" $full) }}
+    <item>
+      <title>{{ .Title }}</title>
+      <link>{{ .Permalink }}</link>
+      <pubDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</pubDate>
+      {{ with .Site.Params.author.email }}<author>{{.}}{{ with $.Site.Params.author.name }} ({{.}}){{end}}</author>{{end}}
+      <guid>{{ .Permalink }}</guid>
+      {{ if eq $rssFeedDescription "summary"}}
+      <description>{{ .Summary | html }}</description>
+      {{ else if (eq $rssFeedDescription "full")}}
+      <description>{{ .Content | html }}</description>
+      {{ else }} {{ errorf "Error in RSS feed generation %q" .Path }}
+      {{ end }}
+    </item>
     {{ end }}
   </channel>
 </rss>
