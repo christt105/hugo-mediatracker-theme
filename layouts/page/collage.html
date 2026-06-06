@@ -214,8 +214,9 @@
         }
 
         .collage-preview-area {
-            height: 60vw;
-            min-height: 240px;
+            height: auto;
+            min-height: 120px;
+            align-items: flex-start;
         }
     }
 </style>
@@ -294,21 +295,31 @@
         countDisplay.innerText = filtered.length;
         colValDisplay.innerText = columnsInput.value;
 
-        canvas.style.gridTemplateColumns = `repeat(${columns}, 600px)`;
+        const isMobile = window.innerWidth <= 768;
+        const itemWidth = isMobile
+            ? Math.floor((previewArea.clientWidth - 32) / Math.min(columns, 5))
+            : 600;
+
+        canvas.style.gridTemplateColumns = `repeat(${columns}, ${itemWidth}px)`;
         canvas.innerHTML = '';
 
         filtered.forEach(item => {
             const div = document.createElement('div');
             div.className = 'collage-item';
+            div.style.width = itemWidth + 'px';
             div.innerHTML = `<img src="${item.image}" alt="${item.title}" crossorigin="anonymous" loading="eager">`;
             canvas.appendChild(div);
         });
 
-        setTimeout(fitPreviewToScreen, 100);
+        if (isMobile) {
+            scaler.style.transform = 'none';
+        } else {
+            setTimeout(fitPreviewToScreen, 100);
+        }
     }
 
     function fitPreviewToScreen() {
-        if (!canvas.firstChild) return;
+        if (!canvas.firstChild || window.innerWidth <= 768) return;
 
         const containerWidth = previewArea.clientWidth - 32;
         const containerHeight = previewArea.clientHeight - 32;
