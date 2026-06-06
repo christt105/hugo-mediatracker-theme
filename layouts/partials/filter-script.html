@@ -38,8 +38,16 @@
         return false;
     }
 
+    function matchesType(cardType) {
+        if (state.type.length === 0) return true;
+        if (state.type.indexOf(cardType) !== -1) return true;
+        // seasons belong to tv — selecting tv also shows seasons
+        if (state.type.indexOf('tv') !== -1 && cardType === 'season') return true;
+        return false;
+    }
+
     function cardMatches(card) {
-        if (!inGroup('type', card.getAttribute('data-type'))) return false;
+        if (!matchesType(card.getAttribute('data-type'))) return false;
         if (!inGroup('status', card.getAttribute('data-status'))) return false;
         if (!inGroup('rating', card.getAttribute('data-rating'))) return false;
         if (!inMulti('tag', card.getAttribute('data-tags'))) return false;

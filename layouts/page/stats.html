@@ -1,8 +1,8 @@
 {{ define "main" }}
 {{/*
-  Stats / dashboard page. Everything is computed server-side from the existing
-  frontmatter so there is no JS chart dependency. Types, statuses and the rating
-  scale are read from the data files, so it adapts to any configuration.
+  Stats page. Server-side computed from frontmatter; no external chart dep.
+  A year selector toggles between all-time and per-year views using JS show/hide
+  over pre-rendered blocks tagged with data-stats-year.
 */}}
 
 {{ $types := partial "media-type-keys.html" . }}
@@ -10,7 +10,7 @@
 {{ $finishedAliases := (index .Site.Data.statuses "finished").aliases }}
 {{ $finished := where $media "Params.status" "in" $finishedAliases }}
 
-{{/* Rating scale info: max numeric key */}}
+{{/* Rating scale */}}
 {{ $ratingKeys := slice }}
 {{ range $k, $v := .Site.Data.ratings }}
   {{ if ne $k "default" }}{{ $ratingKeys = $ratingKeys | append (dict "key" $k "n" (int $k)) }}{{ end }}
@@ -19,20 +19,20 @@
 {{ $maxRatingN := 0 }}
 {{ if gt (len $ratingKeys) 0 }}{{ $maxRatingN = (index $ratingKeys 0).n }}{{ end }}
 
-{{/* Average rating across finished items that have a rating */}}
-{{ $sum := 0 }}
-{{ $n := 0 }}
-{{ range $finished }}
-  {{ with .Params.rating }}
-    {{ $sum = add $sum (int .) }}
-    {{ $n = add $n 1 }}
-  {{ end }}
+{{/* Years with finished content (for the dropdown) */}}
+{{ $byYear := $finished.GroupByDate "2006" }}
+{{ $years := slice }}
+{{ range $byYear }}
+  {{ if ne .Key "0001" }}{{ $years = $years | append .Key }}{{ end }}
 {{ end }}
-{{ $avg := 0.0 }}
-{{ if gt $n 0 }}{{ $avg = div (float $sum) $n }}{{ end }}
 
-{{/* Colour palette for pie charts — cycles if more slices than colours */}}
+{{/* Colour palette for pie charts */}}
 {{ $pieColors := slice "#4f8cff" "#f59e0b" "#22c55e" "#ef4444" "#a855f7" "#ec4899" "#14b8a6" "#f97316" "#0ea5e9" "#d946ef" "#84cc16" "#fb7185" }}
+
+{{/* ------------------------------------------------------------------ */}}
+{{/*  Helper macro: render a set of stats for a given page slice.         */}}
+{{/*  We inline it per block (all-time + each year) below.               */}}
+{{/* ------------------------------------------------------------------ */}}
 
 <div class="wrapper stats-page">
     <header class="header">
@@ -41,7 +41,26 @@
 
     <main class="page-content" aria-label="Content">
 
-        {{/* ---------- Summary cards ---------- */}}
+        {{/* Year selector */}}
+        {{ if gt (len $years) 0 }}
+        <div class="stats-year-filter">
+            <label for="stats-year-select">{{ T "stats_per_year" | default "Year" }}:</label>
+            <select id="stats-year-select">
+                <option value="all">{{ T "filter_all" | default "All time" }}</option>
+                {{ range $years }}
+                <option value="{{ . }}">{{ . }}</option>
+                {{ end }}
+            </select>
+        </div>
+        {{ end }}
+
+        {{/* =================== ALL-TIME BLOCK =================== */}}
+        <div data-stats-year="all">
+
+        {{/* Summary cards — all time */}}
+        {{ $sum := 0 }}{{ $n := 0 }}
+        {{ range $finished }}{{ with .Params.rating }}{{ $sum = add $sum (int .) }}{{ $n = add $n 1 }}{{ end }}{{ end }}
+        {{ $avg := 0.0 }}{{ if gt $n 0 }}{{ $avg = div (float $sum) $n }}{{ end }}
         <section class="stats-cards">
             <div class="stat-card">
                 <span class="stat-number">{{ len $media }}</span>
@@ -70,13 +89,12 @@
             {{ end }}
         </section>
 
-        {{/* ---------- Ratings distribution ---------- */}}
+        {{/* Rating distribution — all time */}}
         {{ $maxRatingCount := 1 }}
         {{ range $ratingKeys }}
             {{ $c := len (where $finished "Params.rating" "eq" .key) }}
             {{ if gt $c $maxRatingCount }}{{ $maxRatingCount = $c }}{{ end }}
         {{ end }}
-
         {{ if gt (len $ratingKeys) 0 }}
         <section class="stats-section">
             <h2 class="section-title">{{ T "stats_ratings_dist" }}</h2>
@@ -86,10 +104,10 @@
                 {{ $c := len (where $finished "Params.rating" "eq" .key) }}
                 <div class="stat-bar-row">
                     <span class="stat-bar-name">
-                        {{ with $theme }}<i class="{{ .icon }}" style="color: {{ .color }}"></i> {{ .label }}{{ else }}{{ .key }}{{ end }}
+                        {{ with $theme }}<i class="{{ .icon }}" style="color:{{ .color }}"></i> {{ .label }}{{ else }}{{ .key }}{{ end }}
                     </span>
                     <span class="stat-bar-track">
-                        <span class="stat-bar-fill" style="width: {{ math.Round (mul (div (float $c) $maxRatingCount) 100) }}%; background: {{ with $theme }}{{ .color }}{{ end }};"></span>
+                        <span class="stat-bar-fill" style="width:{{ math.Round (mul (div (float $c) $maxRatingCount) 100) }}%; background:{{ with $theme }}{{ .color }}{{ end }};"></span>
                     </span>
                     <span class="stat-bar-value">{{ $c }}</span>
                 </div>
@@ -98,23 +116,20 @@
         </section>
         {{ end }}
 
-        {{/* ---------- Finished per year ---------- */}}
-        {{ $byYear := $finished.GroupByDate "2006" }}
+        {{/* Finished per year */}}
         {{ $maxYear := 1 }}
         {{ range $byYear }}
             {{ if and (ne .Key "0001") (gt (len .Pages) $maxYear) }}{{ $maxYear = len .Pages }}{{ end }}
         {{ end }}
-
         <section class="stats-section">
             <h2 class="section-title">{{ T "stats_per_year" }}</h2>
             <div class="stat-bars">
                 {{ range $byYear }}
-                {{ $label := .Key }}
-                {{ if eq .Key "0001" }}{{ $label = "?" }}{{ end }}
+                {{ $label := .Key }}{{ if eq .Key "0001" }}{{ $label = "?" }}{{ end }}
                 <div class="stat-bar-row">
                     <span class="stat-bar-name">{{ $label }}</span>
                     <span class="stat-bar-track">
-                        <span class="stat-bar-fill" style="width: {{ math.Round (mul (div (float (len .Pages)) $maxYear) 100) }}%;"></span>
+                        <span class="stat-bar-fill" style="width:{{ math.Round (mul (div (float (len .Pages)) $maxYear) 100) }}%;"></span>
                     </span>
                     <span class="stat-bar-value">{{ len .Pages }}</span>
                 </div>
@@ -122,13 +137,9 @@
             </div>
         </section>
 
-        {{/* ---------- Average rating per year ---------- */}}
+        {{/* Avg rating by year */}}
         {{ $hasYearRatings := false }}
-        {{ range $byYear }}
-          {{ if ne .Key "0001" }}
-            {{ range .Pages }}{{ with .Params.rating }}{{ $hasYearRatings = true }}{{ end }}{{ end }}
-          {{ end }}
-        {{ end }}
+        {{ range $byYear }}{{ if ne .Key "0001" }}{{ range .Pages }}{{ with .Params.rating }}{{ $hasYearRatings = true }}{{ end }}{{ end }}{{ end }}{{ end }}
         {{ if $hasYearRatings }}
         <section class="stats-section">
             <h2 class="section-title">{{ T "stats_avg_rating_by_year" }}</h2>
@@ -136,9 +147,7 @@
                 {{ range $byYear }}
                 {{ if ne .Key "0001" }}
                 {{ $ySum := 0 }}{{ $yN := 0 }}
-                {{ range .Pages }}
-                  {{ with .Params.rating }}{{ $ySum = add $ySum (int .) }}{{ $yN = add $yN 1 }}{{ end }}
-                {{ end }}
+                {{ range .Pages }}{{ with .Params.rating }}{{ $ySum = add $ySum (int .) }}{{ $yN = add $yN 1 }}{{ end }}{{ end }}
                 {{ if gt $yN 0 }}
                 {{ $yAvg := div (float $ySum) $yN }}
                 {{ $yAvgKey := printf "%.0f" (math.Round $yAvg) }}
@@ -147,10 +156,10 @@
                     <span class="stat-bar-name">{{ .Key }}</span>
                     <span class="stat-bar-track">
                         {{ if $maxRatingN }}
-                        <span class="stat-bar-fill" style="width: {{ math.Round (mul (div $yAvg $maxRatingN) 100) }}%; background: {{ with $yTheme }}{{ .color }}{{ else }}var(--primary-color,#4f8cff){{ end }};"></span>
+                        <span class="stat-bar-fill" style="width:{{ math.Round (mul (div $yAvg $maxRatingN) 100) }}%; background:{{ with $yTheme }}{{ .color }}{{ else }}var(--primary-color,#4f8cff){{ end }};"></span>
                         {{ end }}
                     </span>
-                    <span class="stat-bar-value" style="color: {{ with $yTheme }}{{ .color }}{{ end }};">{{ lang.FormatNumber 1 $yAvg }}</span>
+                    <span class="stat-bar-value" style="color:{{ with $yTheme }}{{ .color }}{{ end }};">{{ lang.FormatNumber 1 $yAvg }}</span>
                 </div>
                 {{ end }}
                 {{ end }}
@@ -159,22 +168,12 @@
         </section>
         {{ end }}
 
-        {{/* ---------- Top genres ---------- */}}
+        {{/* Top genres — all time */}}
         {{ $genres := dict }}
-        {{ range $media }}
-            {{ range .Params.genres }}
-                {{ if . }}
-                {{ $cur := index $genres . | default 0 }}
-                {{ $genres = merge $genres (dict . (add $cur 1)) }}
-                {{ end }}
-            {{ end }}
-        {{ end }}
+        {{ range $media }}{{ range .Params.genres }}{{ if . }}{{ $cur := index $genres . | default 0 }}{{ $genres = merge $genres (dict . (add $cur 1)) }}{{ end }}{{ end }}{{ end }}
         {{ $genreList := slice }}
-        {{ range $k, $v := $genres }}
-            {{ $genreList = $genreList | append (dict "name" $k "count" $v) }}
-        {{ end }}
+        {{ range $k, $v := $genres }}{{ $genreList = $genreList | append (dict "name" $k "count" $v) }}{{ end }}
         {{ $genreList = sort $genreList "count" "desc" }}
-
         {{ if gt (len $genreList) 0 }}
         {{ $maxGenre := (index $genreList 0).count }}
         <section class="stats-section">
@@ -183,9 +182,7 @@
                 {{ range first 12 $genreList }}
                 <div class="stat-bar-row">
                     <span class="stat-bar-name">{{ .name }}</span>
-                    <span class="stat-bar-track">
-                        <span class="stat-bar-fill" style="width: {{ math.Round (mul (div (float .count) $maxGenre) 100) }}%;"></span>
-                    </span>
+                    <span class="stat-bar-track"><span class="stat-bar-fill" style="width:{{ math.Round (mul (div (float .count) $maxGenre) 100) }}%;"></span></span>
                     <span class="stat-bar-value">{{ .count }}</span>
                 </div>
                 {{ end }}
@@ -193,173 +190,241 @@
         </section>
         {{ end }}
 
-        {{/* ---------- Gaming platforms — bar + pie ---------- */}}
-        {{ $games := where $media "Params.type" "eq" "videogame" }}
-        {{ $platforms := dict }}
-        {{ range $games }}
-            {{ range .Params.platforms }}
-                {{ if . }}
-                {{ $cur := index $platforms . | default 0 }}
-                {{ $platforms = merge $platforms (dict . (add $cur 1)) }}
-                {{ end }}
+        {{/* Platforms + Anime + Cinema — all time */}}
+        {{ template "stats-variable-sections" (dict "finished" $finished "pieColors" $pieColors "ratingKeys" $ratingKeys "maxRatingN" $maxRatingN "context" $) }}
+
+        </div>{{/* end data-stats-year="all" */}}
+
+        {{/* =================== PER-YEAR BLOCKS =================== */}}
+        {{ range $years }}
+        {{ $yr := . }}
+        {{ $yrFinished := slice }}
+        {{ range $byYear }}{{ if eq .Key $yr }}{{ $yrFinished = .Pages }}{{ end }}{{ end }}
+
+        <div data-stats-year="{{ $yr }}" hidden>
+
+        {{/* Summary cards — this year */}}
+        {{ $ySum := 0 }}{{ $yN := 0 }}
+        {{ range $yrFinished }}{{ with .Params.rating }}{{ $ySum = add $ySum (int .) }}{{ $yN = add $yN 1 }}{{ end }}{{ end }}
+        {{ $yAvg := 0.0 }}{{ if gt $yN 0 }}{{ $yAvg = div (float $ySum) $yN }}{{ end }}
+        <section class="stats-cards">
+            <div class="stat-card">
+                <span class="stat-number">{{ len $yrFinished }}</span>
+                <span class="stat-label">{{ T "stats_finished" }}</span>
+            </div>
+            {{ range $t := $types }}
+            {{ $def := index $.Site.Data.media_types $t }}
+            {{ $count := len (where $yrFinished "Params.type" "eq" $t) }}
+            {{ if gt $count 0 }}
+            <div class="stat-card">
+                <span class="stat-number"><i class="{{ $def.icon }}"></i> {{ $count }}</span>
+                <span class="stat-label">{{ T (printf "type_plural_%s" $t) }}</span>
+            </div>
             {{ end }}
-        {{ end }}
-        {{ $platformList := slice }}
-        {{ range $k, $v := $platforms }}
-            {{ $platformList = $platformList | append (dict "name" $k "count" $v) }}
-        {{ end }}
-        {{ $platformList = sort $platformList "count" "desc" }}
+            {{ end }}
+            {{ if gt $yN 0 }}
+            <div class="stat-card">
+                <span class="stat-number">
+                    {{ lang.FormatNumber 1 $yAvg }}
+                    {{ if gt $maxRatingN 0 }}<span class="stat-max">/ {{ $maxRatingN }}</span>{{ end }}
+                </span>
+                <span class="stat-label">{{ T "stats_avg_rating" }}</span>
+            </div>
+            {{ end }}
+        </section>
 
-        {{ if gt (len $platformList) 0 }}
-        {{ $platTotal := 0 }}
-        {{ range $platformList }}{{ $platTotal = add $platTotal .count }}{{ end }}
+        {{/* Rating distribution — this year */}}
+        {{ $maxRatingCountY := 1 }}
+        {{ range $ratingKeys }}
+            {{ $c := len (where $yrFinished "Params.rating" "eq" .key) }}
+            {{ if gt $c $maxRatingCountY }}{{ $maxRatingCountY = $c }}{{ end }}
+        {{ end }}
+        {{ $hasRatingsY := false }}
+        {{ range $ratingKeys }}{{ $c := len (where $yrFinished "Params.rating" "eq" .key) }}{{ if gt $c 0 }}{{ $hasRatingsY = true }}{{ end }}{{ end }}
+        {{ if and (gt (len $ratingKeys) 0) $hasRatingsY }}
         <section class="stats-section">
-            <h2 class="section-title">{{ T "stats_platforms" }}</h2>
-            <div class="stats-split">
-                <div class="stat-bars stat-bars-compact">
-                    {{ $maxPlatform := (index $platformList 0).count }}
-                    {{ range $platformList }}
-                    <div class="stat-bar-row">
-                        <span class="stat-bar-name">{{ .name }}</span>
-                        <span class="stat-bar-track">
-                            <span class="stat-bar-fill" style="width: {{ math.Round (mul (div (float .count) $maxPlatform) 100) }}%;"></span>
-                        </span>
-                        <span class="stat-bar-value">{{ .count }}</span>
-                    </div>
-                    {{ end }}
+            <h2 class="section-title">{{ T "stats_ratings_dist" }}</h2>
+            <div class="stat-bars">
+                {{ range $ratingKeys }}
+                {{ $theme := index $.Site.Data.ratings .key }}
+                {{ $c := len (where $yrFinished "Params.rating" "eq" .key) }}
+                {{ if gt $c 0 }}
+                <div class="stat-bar-row">
+                    <span class="stat-bar-name">
+                        {{ with $theme }}<i class="{{ .icon }}" style="color:{{ .color }}"></i> {{ .label }}{{ else }}{{ .key }}{{ end }}
+                    </span>
+                    <span class="stat-bar-track">
+                        <span class="stat-bar-fill" style="width:{{ math.Round (mul (div (float $c) $maxRatingCountY) 100) }}%; background:{{ with $theme }}{{ .color }}{{ end }};"></span>
+                    </span>
+                    <span class="stat-bar-value">{{ $c }}</span>
                 </div>
-                {{ if gt $platTotal 0 }}
-                {{ $platCum := 0.0 }}
-                {{ $platParts := slice }}
-                {{ range $i, $item := $platformList }}
-                  {{ $color := index $pieColors (mod $i (len $pieColors)) }}
-                  {{ $endPct := add $platCum (mul (div (float $item.count) (float $platTotal)) 100) }}
-                  {{ $platParts = $platParts | append (printf "%s %.2f%% %.2f%%" $color $platCum $endPct) }}
-                  {{ $platCum = $endPct }}
                 {{ end }}
-                <div class="pie-wrap">
-                    <div class="pie-chart" style="background: conic-gradient({{ delimit $platParts "," }});"></div>
-                    <div class="pie-legend">
-                        {{ range $i, $item := $platformList }}
-                        <div class="pie-legend-item">
-                            <span class="legend-dot" style="background: {{ index $pieColors (mod $i (len $pieColors)) }};"></span>
-                            <span class="legend-label">{{ $item.name }}</span>
-                            <span class="legend-pct">{{ math.Round (mul (div (float $item.count) (float $platTotal)) 100) }}%</span>
-                        </div>
-                        {{ end }}
-                    </div>
-                </div>
                 {{ end }}
             </div>
         </section>
         {{ end }}
 
-        {{/* ---------- Anime content breakdown ---------- */}}
-        {{ $animeItems := slice }}
-        {{ range $finished }}
-          {{ $isAnime := false }}
-          {{ range .Params.genres }}{{ if or (eq (lower .) "anime") (eq (lower .) "animation") }}{{ $isAnime = true }}{{ end }}{{ end }}
-          {{ $pageTags := .Params.tags }}
-          {{ if and $pageTags (not (reflect.IsSlice $pageTags)) }}{{ $pageTags = slice $pageTags }}{{ end }}
-          {{ range $pageTags }}{{ if eq (lower .) "anime" }}{{ $isAnime = true }}{{ end }}{{ end }}
-          {{ if $isAnime }}{{ $animeItems = $animeItems | append . }}{{ end }}
-        {{ end }}
-        {{ $animeTotal := len $animeItems }}
-        {{ $nonAnimeTotal := sub (len $finished) $animeTotal }}
-        {{ if and (gt $animeTotal 0) (gt (len $finished) 0) }}
-        {{ $animePct := math.Round (mul (div (float $animeTotal) (float (len $finished))) 100) }}
-        {{ $nonAnimePct := sub 100 $animePct }}
-        <section class="stats-section">
-            <h2 class="section-title">{{ T "stats_anime" }}</h2>
-            <div class="stats-split">
-                <div class="stat-bars stat-bars-compact">
-                    <div class="stat-bar-row">
-                        <span class="stat-bar-name">Anime</span>
-                        <span class="stat-bar-track">
-                            <span class="stat-bar-fill" style="width: {{ $animePct }}%; background: #a855f7;"></span>
-                        </span>
-                        <span class="stat-bar-value">{{ $animeTotal }}</span>
-                    </div>
-                    <div class="stat-bar-row">
-                        <span class="stat-bar-name">Non-anime</span>
-                        <span class="stat-bar-track">
-                            <span class="stat-bar-fill" style="width: {{ $nonAnimePct }}%; background: #4f8cff;"></span>
-                        </span>
-                        <span class="stat-bar-value">{{ $nonAnimeTotal }}</span>
-                    </div>
-                </div>
-                <div class="pie-wrap">
-                    <div class="pie-chart" style="background: conic-gradient(#a855f7 0% {{ $animePct }}%, #4f8cff {{ $animePct }}% 100%);"></div>
-                    <div class="pie-legend">
-                        <div class="pie-legend-item">
-                            <span class="legend-dot" style="background: #a855f7;"></span>
-                            <span class="legend-label">Anime</span>
-                            <span class="legend-pct">{{ $animePct }}%</span>
-                        </div>
-                        <div class="pie-legend-item">
-                            <span class="legend-dot" style="background: #4f8cff;"></span>
-                            <span class="legend-label">Non-anime</span>
-                            <span class="legend-pct">{{ $nonAnimePct }}%</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        {{ end }}
+        {{/* Platforms + Anime + Cinema — this year */}}
+        {{ template "stats-variable-sections" (dict "finished" $yrFinished "pieColors" $pieColors "ratingKeys" $ratingKeys "maxRatingN" $maxRatingN "context" $) }}
 
-        {{/* ---------- Cinema vs streaming ---------- */}}
-        {{ $cinemaItems := slice }}
-        {{ $movieFinished := where $finished "Params.type" "eq" "movie" }}
-        {{ range $movieFinished }}
-          {{ $isCinema := false }}
-          {{ $pageTags := .Params.tags }}
-          {{ if and $pageTags (not (reflect.IsSlice $pageTags)) }}{{ $pageTags = slice $pageTags }}{{ end }}
-          {{ range $pageTags }}{{ if or (eq (lower .) "cinema") (eq (lower .) "cine") }}{{ $isCinema = true }}{{ end }}{{ end }}
-          {{ if $isCinema }}{{ $cinemaItems = $cinemaItems | append . }}{{ end }}
-        {{ end }}
-        {{ $cinemaTotal := len $cinemaItems }}
-        {{ $streamTotal := sub (len $movieFinished) $cinemaTotal }}
-        {{ if and (gt $cinemaTotal 0) (gt (len $movieFinished) 0) }}
-        {{ $cinemaPct := math.Round (mul (div (float $cinemaTotal) (float (len $movieFinished))) 100) }}
-        {{ $streamPct := sub 100 $cinemaPct }}
-        <section class="stats-section">
-            <h2 class="section-title">{{ T "stats_cinema" }}</h2>
-            <div class="stats-split">
-                <div class="stat-bars stat-bars-compact">
-                    <div class="stat-bar-row">
-                        <span class="stat-bar-name">Cinema</span>
-                        <span class="stat-bar-track">
-                            <span class="stat-bar-fill" style="width: {{ $cinemaPct }}%; background: #f59e0b;"></span>
-                        </span>
-                        <span class="stat-bar-value">{{ $cinemaTotal }}</span>
-                    </div>
-                    <div class="stat-bar-row">
-                        <span class="stat-bar-name">Streaming / Home</span>
-                        <span class="stat-bar-track">
-                            <span class="stat-bar-fill" style="width: {{ $streamPct }}%; background: #22c55e;"></span>
-                        </span>
-                        <span class="stat-bar-value">{{ $streamTotal }}</span>
-                    </div>
-                </div>
-                <div class="pie-wrap">
-                    <div class="pie-chart" style="background: conic-gradient(#f59e0b 0% {{ $cinemaPct }}%, #22c55e {{ $cinemaPct }}% 100%);"></div>
-                    <div class="pie-legend">
-                        <div class="pie-legend-item">
-                            <span class="legend-dot" style="background: #f59e0b;"></span>
-                            <span class="legend-label">Cinema</span>
-                            <span class="legend-pct">{{ $cinemaPct }}%</span>
-                        </div>
-                        <div class="pie-legend-item">
-                            <span class="legend-dot" style="background: #22c55e;"></span>
-                            <span class="legend-label">Streaming / Home</span>
-                            <span class="legend-pct">{{ $streamPct }}%</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+        </div>{{/* end data-stats-year="YYYY" */}}
         {{ end }}
 
     </main>
 </div>
+
+{{/* =================== VARIABLE SECTIONS PARTIAL =================== */}}
+{{/* Rendered once for all-time and once per year — platforms, anime, cinema */}}
+{{ define "stats-variable-sections" }}
+{{ $finished  := .finished }}
+{{ $pieColors := .pieColors }}
+{{ $ctx       := .context }}
+
+{{/* Platforms */}}
+{{ $games := where $finished "Params.type" "eq" "videogame" }}
+{{ $platforms := dict }}
+{{ range $games }}{{ range .Params.platforms }}{{ if . }}{{ $cur := index $platforms . | default 0 }}{{ $platforms = merge $platforms (dict . (add $cur 1)) }}{{ end }}{{ end }}{{ end }}
+{{ $platformList := slice }}
+{{ range $k, $v := $platforms }}{{ $platformList = $platformList | append (dict "name" $k "count" $v) }}{{ end }}
+{{ $platformList = sort $platformList "count" "desc" }}
+
+{{ if gt (len $platformList) 0 }}
+{{ $platTotal := 0 }}
+{{ range $platformList }}{{ $platTotal = add $platTotal .count }}{{ end }}
+<section class="stats-section">
+    <h2 class="section-title">{{ T "stats_platforms" }}</h2>
+    <div class="stats-split">
+        <div class="stat-bars stat-bars-compact">
+            {{ $maxPlatform := (index $platformList 0).count }}
+            {{ range $platformList }}
+            <div class="stat-bar-row">
+                <span class="stat-bar-name">{{ .name }}</span>
+                <span class="stat-bar-track"><span class="stat-bar-fill" style="width:{{ math.Round (mul (div (float .count) $maxPlatform) 100) }}%;"></span></span>
+                <span class="stat-bar-value">{{ .count }}</span>
+            </div>
+            {{ end }}
+        </div>
+        {{ if gt $platTotal 0 }}
+        {{ $platCum := 0.0 }}{{ $platParts := slice }}
+        {{ range $i, $item := $platformList }}
+          {{ $color := index $pieColors (mod $i (len $pieColors)) }}
+          {{ $endPct := add $platCum (mul (div (float $item.count) (float $platTotal)) 100) }}
+          {{ $platParts = $platParts | append (printf "%s %.2f%% %.2f%%" $color $platCum $endPct) }}
+          {{ $platCum = $endPct }}
+        {{ end }}
+        <div class="pie-wrap">
+            <div class="pie-chart" style="background:conic-gradient({{ delimit $platParts "," }});"></div>
+            <div class="pie-legend">
+                {{ range $i, $item := $platformList }}
+                <div class="pie-legend-item">
+                    <span class="legend-dot" style="background:{{ index $pieColors (mod $i (len $pieColors)) }};"></span>
+                    <span class="legend-label">{{ $item.name }}</span>
+                    <span class="legend-pct">{{ math.Round (mul (div (float $item.count) (float $platTotal)) 100) }}%</span>
+                </div>
+                {{ end }}
+            </div>
+        </div>
+        {{ end }}
+    </div>
+</section>
+{{ end }}
+
+{{/* Anime */}}
+{{ $animeItems := slice }}
+{{ range $finished }}
+  {{ $isAnime := false }}
+  {{ range .Params.genres }}{{ if or (eq (lower .) "anime") (eq (lower .) "animation") }}{{ $isAnime = true }}{{ end }}{{ end }}
+  {{ $pageTags := .Params.tags }}
+  {{ if and $pageTags (not (reflect.IsSlice $pageTags)) }}{{ $pageTags = slice $pageTags }}{{ end }}
+  {{ range $pageTags }}{{ if eq (lower .) "anime" }}{{ $isAnime = true }}{{ end }}{{ end }}
+  {{ if $isAnime }}{{ $animeItems = $animeItems | append . }}{{ end }}
+{{ end }}
+{{ $animeTotal := len $animeItems }}
+{{ $nonAnimeTotal := sub (len $finished) $animeTotal }}
+{{ if and (gt $animeTotal 0) (gt (len $finished) 0) }}
+{{ $animePct := math.Round (mul (div (float $animeTotal) (float (len $finished))) 100) }}
+{{ $nonAnimePct := sub 100 $animePct }}
+<section class="stats-section">
+    <h2 class="section-title">{{ T "stats_anime" }}</h2>
+    <div class="stats-split">
+        <div class="stat-bars stat-bars-compact">
+            <div class="stat-bar-row">
+                <span class="stat-bar-name">Anime</span>
+                <span class="stat-bar-track"><span class="stat-bar-fill" style="width:{{ $animePct }}%; background:#a855f7;"></span></span>
+                <span class="stat-bar-value">{{ $animeTotal }}</span>
+            </div>
+            <div class="stat-bar-row">
+                <span class="stat-bar-name">Non-anime</span>
+                <span class="stat-bar-track"><span class="stat-bar-fill" style="width:{{ $nonAnimePct }}%; background:#4f8cff;"></span></span>
+                <span class="stat-bar-value">{{ $nonAnimeTotal }}</span>
+            </div>
+        </div>
+        <div class="pie-wrap">
+            <div class="pie-chart" style="background:conic-gradient(#a855f7 0% {{ $animePct }}%, #4f8cff {{ $animePct }}% 100%);"></div>
+            <div class="pie-legend">
+                <div class="pie-legend-item"><span class="legend-dot" style="background:#a855f7;"></span><span class="legend-label">Anime</span><span class="legend-pct">{{ $animePct }}%</span></div>
+                <div class="pie-legend-item"><span class="legend-dot" style="background:#4f8cff;"></span><span class="legend-label">Non-anime</span><span class="legend-pct">{{ $nonAnimePct }}%</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+{{ end }}
+
+{{/* Cinema */}}
+{{ $cinemaItems := slice }}
+{{ $movieFinished := where $finished "Params.type" "eq" "movie" }}
+{{ range $movieFinished }}
+  {{ $isCinema := false }}
+  {{ $pageTags := .Params.tags }}
+  {{ if and $pageTags (not (reflect.IsSlice $pageTags)) }}{{ $pageTags = slice $pageTags }}{{ end }}
+  {{ range $pageTags }}{{ if or (eq (lower .) "cinema") (eq (lower .) "cine") }}{{ $isCinema = true }}{{ end }}{{ end }}
+  {{ if $isCinema }}{{ $cinemaItems = $cinemaItems | append . }}{{ end }}
+{{ end }}
+{{ $cinemaTotal := len $cinemaItems }}
+{{ $streamTotal := sub (len $movieFinished) $cinemaTotal }}
+{{ if and (gt $cinemaTotal 0) (gt (len $movieFinished) 0) }}
+{{ $cinemaPct := math.Round (mul (div (float $cinemaTotal) (float (len $movieFinished))) 100) }}
+{{ $streamPct := sub 100 $cinemaPct }}
+<section class="stats-section">
+    <h2 class="section-title">{{ T "stats_cinema" }}</h2>
+    <div class="stats-split">
+        <div class="stat-bars stat-bars-compact">
+            <div class="stat-bar-row">
+                <span class="stat-bar-name">Cinema</span>
+                <span class="stat-bar-track"><span class="stat-bar-fill" style="width:{{ $cinemaPct }}%; background:#f59e0b;"></span></span>
+                <span class="stat-bar-value">{{ $cinemaTotal }}</span>
+            </div>
+            <div class="stat-bar-row">
+                <span class="stat-bar-name">Streaming / Home</span>
+                <span class="stat-bar-track"><span class="stat-bar-fill" style="width:{{ $streamPct }}%; background:#22c55e;"></span></span>
+                <span class="stat-bar-value">{{ $streamTotal }}</span>
+            </div>
+        </div>
+        <div class="pie-wrap">
+            <div class="pie-chart" style="background:conic-gradient(#f59e0b 0% {{ $cinemaPct }}%, #22c55e {{ $cinemaPct }}% 100%);"></div>
+            <div class="pie-legend">
+                <div class="pie-legend-item"><span class="legend-dot" style="background:#f59e0b;"></span><span class="legend-label">Cinema</span><span class="legend-pct">{{ $cinemaPct }}%</span></div>
+                <div class="pie-legend-item"><span class="legend-dot" style="background:#22c55e;"></span><span class="legend-label">Streaming / Home</span><span class="legend-pct">{{ $streamPct }}%</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+{{ end }}
+
+{{ end }}{{/* end define "stats-variable-sections" */}}
+
+<script>
+(function() {
+    var sel = document.getElementById('stats-year-select');
+    if (!sel) return;
+    function apply() {
+        var year = sel.value;
+        document.querySelectorAll('[data-stats-year]').forEach(function(el) {
+            el.hidden = el.getAttribute('data-stats-year') !== year;
+        });
+    }
+    sel.addEventListener('change', apply);
+    apply();
+})();
+</script>
 {{ end }}
