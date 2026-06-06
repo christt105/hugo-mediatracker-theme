@@ -144,11 +144,11 @@
         <section class="stats-section">
             <h2 class="section-title">{{ T "stats_ratings_dist" }}</h2>
             <div class="stat-bars">
-                {{ range $ratingKeys }}
-                {{ $theme := index $.Site.Data.ratings .key }}
+                {{ range $rk2 := $ratingKeys }}
+                {{ $theme := index $.Site.Data.ratings $rk2.key }}
                 {{ $c := 0 }}
                 {{ range $item := $finished }}
-                  {{ if eq $item.Params.rating .key }}
+                  {{ if eq $item.Params.rating $rk2.key }}
                     {{ $times := 1 }}
                     {{ if reflect.IsSlice $item.Params.rewatches }}{{ $times = add $times (len $item.Params.rewatches) }}{{ end }}
                     {{ $c = add $c $times }}
@@ -156,7 +156,7 @@
                 {{ end }}
                 <div class="stat-bar-row">
                     <span class="stat-bar-name">
-                        {{ with $theme }}<i class="{{ .icon }}" style="color:{{ .color }}"></i> {{ .label }}{{ else }}{{ .key }}{{ end }}
+                        {{ with $theme }}<i class="{{ .icon }}" style="color:{{ .color }}"></i> {{ .label }}{{ else }}{{ $rk2.key }}{{ end }}
                     </span>
                     <span class="stat-bar-track">
                         <span class="stat-bar-fill" style="width:{{ math.Round (mul (div (float $c) $maxRatingCount) 100) }}%; background:{{ with $theme }}{{ .color }}{{ end }};"></span>
