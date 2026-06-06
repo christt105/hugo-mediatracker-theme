@@ -297,7 +297,7 @@
 
         const isMobile = window.innerWidth <= 768;
         const itemWidth = isMobile
-            ? Math.floor((previewArea.clientWidth - 32) / Math.min(columns, 5))
+            ? Math.floor((previewArea.clientWidth - 32) / columns)
             : 600;
 
         canvas.style.gridTemplateColumns = `repeat(${columns}, ${itemWidth}px)`;
