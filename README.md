@@ -52,6 +52,15 @@ See [mediatracker-starter](https://github.com/christt105/mediatracker-starter)
 for a ready-to-clone example, or the
 [live site](https://christt105.github.io/MediaTracker/).
 
+## Creating content
+
+Entries are plain Markdown page bundles, so you can author them by hand. For a
+faster workflow, the companion
+[hugo-mediatracker-plugin](https://github.com/christt105/hugo-mediatracker-plugin)
+for Obsidian searches TMDB, TheTVDB, IGDB and Steam and writes notes with the
+exact frontmatter this theme expects (cover, banner, genres, ids, season
+relations and more).
+
 ## Content conventions
 
 ### Series and seasons
