@@ -25,7 +25,7 @@ website. **New here? Don't start with the bare theme — clone the starter site 
   **start here.** A ready-to-clone site that already imports this theme; deploy to
   GitHub Pages in minutes. ([live demo](https://christt105.github.io/mediatracker-starter/))
 - 🎨 **hugo-mediatracker-theme** — this repo: the Hugo theme that renders the library.
-- 📥 **[hugo-mediatracker-plugin](https://github.com/christt105/hugo-mediatracker-plugin)** —
+- 📥 **[obsidian-mediatracker-plugin](https://github.com/christt105/obsidian-mediatracker-plugin)** —
   an Obsidian plugin that creates theme-compatible notes from TMDB, TheTVDB, IGDB,
   Steam and Open Library, so you don't have to write frontmatter by hand.
 
@@ -69,7 +69,7 @@ for a ready-to-clone example, or the
 
 Entries are plain Markdown page bundles, so you can author them by hand. For a
 faster workflow, the companion
-[hugo-mediatracker-plugin](https://github.com/christt105/hugo-mediatracker-plugin)
+[obsidian-mediatracker-plugin](https://github.com/christt105/obsidian-mediatracker-plugin)
 for Obsidian searches TMDB, TheTVDB, IGDB and Steam and writes notes with the
 exact frontmatter this theme expects (cover, banner, genres, ids, season
 relations and more).
