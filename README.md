@@ -16,6 +16,19 @@ Features:
 - RSS feeds with cover thumbnails, including a dedicated feed for finished items
 - Collage generator (downloadable PNG, mobile-friendly)
 
+## Media Tracker ecosystem
+
+This theme is one piece of a small ecosystem that turns your media library into a
+website. **New here? Don't start with the bare theme — clone the starter site below.**
+
+- 🚀 **[mediatracker-starter](https://github.com/christt105/mediatracker-starter)** —
+  **start here.** A ready-to-clone site that already imports this theme; deploy to
+  GitHub Pages in minutes. ([live demo](https://christt105.github.io/mediatracker-starter/))
+- 🎨 **hugo-mediatracker-theme** — this repo: the Hugo theme that renders the library.
+- 📥 **[hugo-mediatracker-plugin](https://github.com/christt105/hugo-mediatracker-plugin)** —
+  an Obsidian plugin that creates theme-compatible notes from TMDB, TheTVDB, IGDB,
+  Steam and Open Library, so you don't have to write frontmatter by hand.
+
 ## Usage
 
 Requires Hugo extended and Go (for modules).
