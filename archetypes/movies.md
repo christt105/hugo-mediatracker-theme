@@ -1,7 +1,7 @@
 ---
 title: "{{ replace .File.ContentBaseName "-" " " | title }}"
 date: {{ .Date }}
-type: ""
+type: movie
 status: not_started
 rating: ""
 image: cover.jpg
@@ -11,12 +11,6 @@ release_date: ""
 genres: []
 tags: []
 tmdb_id: ""
-steam_appid: ""
-platforms: []
-developer: ""
-author: ""
-series: ""
-season_number: 1
 # rewatches:
 #   - 2024-06-15
 ---
