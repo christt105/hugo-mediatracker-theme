@@ -123,6 +123,16 @@ relevant tags are present:
 
 Both sections only appear when at least one matching finished item exists.
 
+## Screenshots
+
+![Main gallery](https://raw.githubusercontent.com/christt105/hugo-mediatracker-theme/main/images/screenshot.png)
+
+![Filter bar and search](https://raw.githubusercontent.com/christt105/hugo-mediatracker-theme/main/images/filter-search.png)
+
+![Statistics page](https://raw.githubusercontent.com/christt105/hugo-mediatracker-theme/main/images/stats.png)
+
+![Collage generator](https://raw.githubusercontent.com/christt105/hugo-mediatracker-theme/main/images/collage.png)
+
 ## Frontmatter reference
 
 ### Common fields (all types)
