@@ -9,4 +9,9 @@ features = ["data-driven types", "search and filters", "stats", "rss"]
 
 [author]
   name = "christt105"
-  homepage = "https://github.com/christt105"
+  homepage = "https://christt105.github.io/"
+
+[original]
+  author = "hugo-sid"
+  homepage = "https://hba.sid.one"
+  repo = "https://github.com/hugo-sid/hugo-blog-awesome"
