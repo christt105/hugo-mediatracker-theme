@@ -123,6 +123,44 @@ relevant tags are present:
 
 Both sections only appear when at least one matching finished item exists.
 
+## Frontmatter reference
+
+### Common fields (all types)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | Entry title |
+| `date` | date | Completion date — used in per-year stats and card sorting |
+| `type` | string | Media type key from `data/media_types.yml`: `movie`, `tv`, `season`, `videogame`, `book` |
+| `status` | string | `finished` · `in_progress` · `not_started` · `paused` · `dropped` |
+| `rating` | string | Numeric rating as a string (`"7"`, `"10"`) |
+| `image` | string | Cover image filename in the page bundle |
+| `banner_image` | string | Wide banner image filename in the page bundle |
+| `overview` | string | Synopsis shown on the entry page |
+| `release_date` | string | Original release date of the title (`"2024-03-15"`) |
+| `genres` | list | Genre strings — `Anime` or `Animation` activates the anime breakdown in stats |
+| `tags` | list | Free tags — `cinema` or `cine` activates the cinema vs. streaming breakdown in stats |
+| `rewatches` | list | Dates of repeat viewings; each entry is a date string (`- 2024-06-15`) |
+
+### Type-specific fields
+
+| Field | Type | Types | Description |
+|-------|------|-------|-------------|
+| `tmdb_id` | string | `movie`, `tv`, `season` | TMDB ID — links the badge on the entry page |
+| `steam_appid` | string | `videogame` | Steam app ID — links the badge |
+| `platforms` | list | `videogame` | Platforms played on — appear in the stats pie chart |
+| `developer` | string | `videogame` | Game developer |
+| `author` | string | `book` | Book author |
+| `series` | string | `season` | Exact folder name of the parent TV show entry |
+| `season_number` | integer | `season` | Season number — used for ordering on the show page |
+
+### Archetypes
+
+The theme ships archetypes for each built-in content section. Running
+`hugo new movies/my-film/index.md` (or the equivalent for `tv`, `seasons`,
+`games`, `books`) generates a pre-filled frontmatter for that type. The
+`default` archetype covers all fields and acts as a fallback for custom types.
+
 ## Local development
 
 To work on the theme against a site, add a `go.work` (not committed) in the site
