@@ -1,5 +1,7 @@
 # Media Tracker theme
 
+![Screenshot](https://raw.githubusercontent.com/christt105/hugo-mediatracker-theme/main/images/screenshot.png)
+
 A Hugo theme for keeping a personal log of movies, series, games and any other
 media type. It is built as a Hugo Module on top of
 [hugo-blog-awesome](https://github.com/hugo-sid/hugo-blog-awesome).

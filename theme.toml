@@ -6,7 +6,6 @@ homepage = "https://github.com/christt105/hugo-mediatracker-theme"
 demosite = "https://christt105.github.io/MediaTracker/"
 tags = ["media", "tracker", "movies", "games", "personal"]
 features = ["data-driven types", "search and filters", "stats", "rss"]
-min_version = "0.146.0"
 
 [author]
   name = "christt105"
