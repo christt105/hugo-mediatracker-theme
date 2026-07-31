@@ -12,13 +12,6 @@
 {{- $pages := .pages -}}
 {{- $ctx := .ctx -}}
 
-{{- /* Status aliases from data/statuses.yml */ -}}
-{{- $finishedAliases := (index site.Data.statuses "finished").aliases -}}
-{{- $pausedAliases := (index site.Data.statuses "paused").aliases -}}
-{{- $droppedAliases := (index site.Data.statuses "dropped").aliases -}}
-{{- $notStartedAliases := (index site.Data.statuses "not_started").aliases -}}
-{{- $knownAliases := union (union $finishedAliases $pausedAliases) (union $droppedAliases $notStartedAliases) -}}
-
 {{- /* Hide a TV parent that has dated seasons (preserves prior behavior) */ -}}
 {{- $mediaClean := slice -}}
 {{- range $pages -}}
@@ -29,10 +22,11 @@
   {{- end -}}
 {{- end -}}
 
-{{- $finished := where $mediaClean "Params.status" "in" $finishedAliases -}}
-{{- $paused := where $mediaClean "Params.status" "in" $pausedAliases -}}
-{{- $dropped := where $mediaClean "Params.status" "in" $droppedAliases -}}
-{{- $inProgress := where $mediaClean "Params.status" "not in" $knownAliases -}}
+{{- $knownStatuses := slice "finished" "paused" "dropped" "not_started" -}}
+{{- $finished := where $mediaClean "Params.status" "==" "finished" -}}
+{{- $paused := where $mediaClean "Params.status" "==" "paused" -}}
+{{- $dropped := where $mediaClean "Params.status" "==" "dropped" -}}
+{{- $inProgress := where $mediaClean "Params.status" "not in" $knownStatuses -}}
 
 {{- /* Expand each finished entry plus any rewatch dates into dated entries */ -}}
 {{- $finishedEntries := slice -}}
