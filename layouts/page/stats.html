@@ -7,8 +7,7 @@
 
 {{ $types := partial "media-type-keys.html" . }}
 {{ $media := where .Site.RegularPages "Params.type" "in" $types }}
-{{ $finishedAliases := (index .Site.Data.statuses "finished").aliases }}
-{{ $finished := where $media "Params.status" "in" $finishedAliases }}
+{{ $finished := where $media "Params.status" "==" "finished" }}
 
 {{/* Rating scale */}}
 {{ $ratingKeys := slice }}
