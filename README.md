@@ -141,6 +141,7 @@ Both sections only appear when at least one matching finished item exists.
 | `genres` | list | Genre strings; `Anime` or `Animation` activates the anime breakdown in stats |
 | `tags` | list | Free tags; `cinema` or `cine` activates the cinema vs. streaming chart in stats |
 | `rewatches` | list | Repeat viewing dates, one date string per entry (`- 2024-06-15`) |
+| `pending_review` | bool | `true` keeps the entry out of the RSS feeds (its page is still built), for viewings recorded automatically that are not confirmed yet |
 
 ### Type-specific fields
 

@@ -6,6 +6,8 @@
 {{- else -}}
 {{- $pages = $pctx.Pages -}}
 {{- end -}}
+{{- /* Viewings pending review stay out of the feed until they are confirmed. */ -}}
+{{- $pages = where $pages "Params.pending_review" "!=" true -}}
 {{- $limit := .Site.Config.Services.RSS.Limit -}}
 {{- if ge $limit 1 -}}
 {{- $pages = $pages | first $limit -}}

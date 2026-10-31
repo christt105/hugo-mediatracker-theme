@@ -13,6 +13,8 @@
     {{ printf "<atom:link href=%q rel=\"self\" type=%q />" .Permalink .MediaType | safeHTML }}
     {{- end -}}
     {{- $finished := where .Site.RegularPages "Params.status" "==" "finished" -}}
+    {{- /* Viewings pending review stay out of the feed until they are confirmed. */ -}}
+    {{- $finished = where $finished "Params.pending_review" "!=" true -}}
     {{- $finished = sort $finished "Date" "desc" -}}
     {{- $limit := .Site.Config.Services.RSS.Limit -}}
     {{- if ge $limit 1 -}}{{ $finished = $finished | first $limit }}{{- end -}}
