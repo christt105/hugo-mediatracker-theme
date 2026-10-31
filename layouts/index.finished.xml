@@ -14,6 +14,8 @@
     {{- end -}}
     {{- $finishedAliases := (index .Site.Data.statuses "finished").aliases -}}
     {{- $finished := where .Site.RegularPages "Params.status" "in" $finishedAliases -}}
+    {{- /* Viewings pending review stay out of the feed until they are confirmed. */ -}}
+    {{- $finished = where $finished "Params.pending_review" "!=" true -}}
     {{- $finished = sort $finished "Date" "desc" -}}
     {{- $limit := .Site.Config.Services.RSS.Limit -}}
     {{- if ge $limit 1 -}}{{ $finished = $finished | first $limit }}{{- end -}}
