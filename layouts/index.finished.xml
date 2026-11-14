@@ -12,14 +12,28 @@
     {{- with .OutputFormats.Get "RSS_FINISHED" -}}
     {{ printf "<atom:link href=%q rel=\"self\" type=%q />" .Permalink .MediaType | safeHTML }}
     {{- end -}}
+    {{- /* One entry per viewing: the finish date plus every rewatch date. */ -}}
     {{- $finished := where .Site.RegularPages "Params.status" "==" "finished" -}}
     {{- /* Viewings pending review stay out of the feed until they are confirmed. */ -}}
     {{- $finished = where $finished "Params.pending_review" "!=" true -}}
-    {{- $finished = sort $finished "Date" "desc" -}}
+    {{- $views := slice -}}
+    {{- range $finished -}}
+      {{- $page := . -}}
+      {{- if not .Date.IsZero -}}
+        {{- $views = $views | append (dict "page" $page "date" .Date) -}}
+      {{- end -}}
+      {{- if reflect.IsSlice .Params.rewatches -}}
+        {{- range .Params.rewatches -}}
+          {{- if or (reflect.IsMap .) (not .) -}}{{- continue -}}{{- end -}}
+          {{- $views = $views | append (dict "page" $page "date" (. | time.AsTime)) -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+    {{- $views = sort $views "date" "desc" -}}
     {{- $limit := .Site.Config.Services.RSS.Limit -}}
-    {{- if ge $limit 1 -}}{{ $finished = $finished | first $limit }}{{- end -}}
-    {{ range $finished }}
-    {{ partial "rss-item.html" (dict "page" . "full" false) }}
+    {{- if ge $limit 1 -}}{{ $views = $views | first $limit }}{{- end -}}
+    {{ range $views }}
+    {{ partial "rss-item.html" (dict "page" .page "full" false "date" .date) }}
     {{ end }}
   </channel>
 </rss>

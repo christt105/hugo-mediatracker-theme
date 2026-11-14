@@ -3,19 +3,26 @@
   Input: a dict with
     page: the Page
     full: bool (true => full content in <description>, else summary)
+    date: optional time.Time; when set it replaces the page date in <pubDate>
+          and is appended to the <guid>, so each viewing is a distinct item
   Covers are page bundle resources, so they are resized and emitted as both an
   <enclosure> (podcatcher-style readers) and <media:*> (rich feed readers).
 */}}
 {{- $p := .page -}}
 {{- $full := .full -}}
+{{- $date := .date | default $p.Date -}}
 <item>
   <title>{{ $p.Title }}</title>
   <link>{{ $p.Permalink }}</link>
-  <pubDate>{{ $p.Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</pubDate>
+  <pubDate>{{ $date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</pubDate>
   {{- with $p.Site.Params.author.email }}
   <author>{{ . }}{{ with $p.Site.Params.author.name }} ({{ . }}){{ end }}</author>
   {{- end }}
+  {{- if .date }}
+  <guid isPermaLink="false">{{ $p.Permalink }}#{{ $date.Format "2006-01-02" }}</guid>
+  {{- else }}
   <guid>{{ $p.Permalink }}</guid>
+  {{- end }}
   {{- if $full }}
   <description>{{ $p.Content | html }}</description>
   {{- else }}
